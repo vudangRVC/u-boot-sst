@@ -79,7 +79,6 @@
 &eth0 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&eth0_pins>;
-	alt-mdio-base = <0x11c20000>;
 	status = "okay";
 
 	phy-handle = <&phy0>;
@@ -93,7 +92,8 @@
 &eth1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&eth1_pins>;
-	status = "disabled";
+	alt-mdio-base = <0x11c20000>;
+	status = "okay";
 
 	phy-handle = <&phy1>;
 	phy-mode = "rgmii";
