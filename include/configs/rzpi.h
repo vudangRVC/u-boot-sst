@@ -8,6 +8,10 @@
 
 #include <asm/arch/rmobile.h>
 
+//Set the correct memory of the board
+#define ISSI_4Gb_DDR 0
+#define ISSI_8Gb_DDR 1
+
 #define CONFIG_REMAKE_ELF
 
 #ifdef CONFIG_SPL
@@ -61,14 +65,16 @@
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"bootm_size=0x10000000 \0" \
-	"prodsdbootargs=setenv bootargs rw rootwait earlycon root=/dev/mmcblk1p1 \0" \
-	"prodemmcbootargs=setenv bootargs rw rootwait earlycon root=/dev/mmcblk0p1 \0" \
-	"bootimage=unzip 0x4A080000 0x48080000; booti 0x48080000 - 0x48000000 \0" \
-	"emmcload=ext4load mmc 0:1 0x4A080000 boot/Image.gz;ext4load mmc 0:1 0x48000000 boot/rzpi.dtb;run prodemmcbootargs \0" \
-	"sd1load=ext4load mmc 1:1 0x4A080000 boot/Image.gz;ext4load mmc 1:1 0x48000000 boot/rzpi.dtb;run prodsdbootargs \0" \
-	"bootcmd_check=if mmc dev 1; then run sd1load; else run emmcload; fi \0"
+	"prodsdbootargs=setenv bootargs rw rootwait earlycon root=/dev/mmcblk0p2\0" \
+	"bootimage=unzip 0x4A080000 0x48080000; booti 0x48080000 - 0x48000000\0" \
+	"bootcmd_load=ext4load mmc 0:2 0x4A080000 boot/Image.gz;ext4load mmc 0:2 0x48000000 boot/rzpi.dtb;run prodsdbootargs\0" \
+	"fiperase=sf erase 1d000 b0000\0" \
+	"fipload=mmc rescan;sf probe; fatload mmc 0:1 $loadaddr fip.bin\0" \
+	"fipwrite=sf write $loadaddr 1d200 $filesize\0" \
+	"ethrotate=no\0" \
+	"ethact=ethernet@11c30000\0" /* The short connector. */
 
-#define CONFIG_BOOTCOMMAND	"env default -a;run bootcmd_check;run bootimage"
+#define CONFIG_BOOTCOMMAND	"run bootcmd_load;run bootimage"
 
 /* For board */
 /* Ethernet RAVB */
