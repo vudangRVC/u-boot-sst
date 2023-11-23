@@ -62,6 +62,13 @@
 #define CONFIG_BOARD_SIZE_LIMIT		1048576
 
 /* ENV setting */
+/* Support uEnv.txt to pass environment variables (and device tree overlays) to the kernel */
+#ifndef CONFIG_CMD_IMPORTENV
+#define CONFIG_CMD_IMPORTENV
+#endif
+#define RZPI_UENV_FDTO_SUPPORT
+
+#ifndef RZPI_UENV_FDTO_SUPPORT
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"bootm_size=0x10000000 \0" \
@@ -75,6 +82,34 @@
 	"ethact=ethernet@11c30000\0" /* The short connector. */
 
 #define CONFIG_BOOTCOMMAND	"run bootcmd_load;run bootimage"
+
+#else
+
+#define CONFIG_EXTRA_ENV_SETTINGS \
+	"fdtfile=boot/uEnv.txt\0" \
+	"image=Image \0" \
+	"mmcdev=0\0" \
+	"mmcpart=2\0" \
+	"dtb_addr=0x48000000 \0" \
+	"dtbo_addr=0x48010000\0" \
+	"image_addr=0x48080000 \0" \
+	"env_addr=0x58000000 \0" \
+	"importbootenv=echo Importing environment from mmc${mmcdev} ...; " \
+		"env import -t ${env_addr} ${filesize}\0" \
+	"loadbootenv=ext4load mmc ${mmcdev}:${mmcpart} ${env_addr} ${fdtfile}\0" \
+	"envboot=mmc dev ${mmcdev}; " \
+		"if mmc rescan; then " \
+			"echo SD/MMC found on device ${mmcdev};" \
+			"if run loadbootenv; then " \
+				"echo Loaded env from ${fdtfile};" \
+				"run importbootenv;" \
+			"fi;" \
+		"fi;\0" \
+	"bootimage=booti ${image_addr} - ${dtb_addr} \0"
+
+#define CONFIG_BOOTCOMMAND	"run envboot;run prodsdboot"
+
+#endif
 
 /* For board */
 /* Ethernet RAVB */
