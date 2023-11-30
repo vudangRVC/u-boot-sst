@@ -123,6 +123,20 @@ static void configure_gpy111_phys(void)
 #define PFC_PM10         0x0120
 #define PFC_IOLH16       0x10B0
 
+/* Enable the 32KHz clock generator which the Bluetooth/Wi-Fi module needs */
+static void enable_32khz_clock(void)
+{
+	static const uchar enable = 0x40;
+	struct udevice *bus, *chip;
+
+	if (!uclass_get_device_by_seq(UCLASS_I2C, 0, &bus) &&
+			!i2c_get_chip(bus, 0x12, 1, &chip) &&
+			!i2c_set_chip_offset_len(chip, 1))
+	{
+		dm_i2c_write(chip, 0x6c, &enable, sizeof(enable));
+	}
+}
+
 static void setup_pins(void)
 {
 	volatile u8  *prt = (volatile u8  *)PFC_BASE;
@@ -160,6 +174,7 @@ int board_late_init(void)
 int last_stage_init(void)
 {
 	configure_gpy111_phys();
+	enable_32khz_clock();
 
 	return 0;
 }
