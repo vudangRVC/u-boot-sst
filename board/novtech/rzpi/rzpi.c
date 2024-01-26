@@ -109,11 +109,19 @@ static void configure_gpy111_phys(void)
 			const char *dn = dev->name;
 			unsigned char addr = addrs[i];
 
-			if ((miiphy_write(dn, addr, 0x17, 0xb400) != 0) ||
-			    (miiphy_read(dn, addr, MII_BMCR, &data) != 0) ||
-			    (miiphy_write(dn, addr,  MII_BMCR, data | 1) != 0))
+			if (miiphy_write(dn, addr, 0x17, 0xb400) != 0)
 			{
 				printf("Can't configure delay for PHY %u", (unsigned int )addr);
+			}
+
+			if (miiphy_read(dn, addr, MII_BMCR, &data) != 0)
+			{
+				printf("Can't read control register status for PHY %u", (unsigned int )addr);
+			}
+
+			if (miiphy_write(dn, addr,  MII_BMCR, data | 1) != 0)
+			{
+				printf("Can't reset for PHY %u", (unsigned int )addr);
 			}
 		}
 	}
