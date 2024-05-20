@@ -186,9 +186,9 @@ config TARGET_SMARC_RZG2L
           Support for Renesas RZ/G2L Dev Platform
 
 config TARGET_RZPI
-	bool "NovTech RZpi board"
+	bool "RZ/G2L SBC board"
 	help
-	  Support for NovTech's Raspberry-Pi-like board
+	  Support for Renesas RZG2L Raspberry-Pi-like board
 
 config TARGET_RZV2L_DEV
 	bool "RZ/V2L Dev board"
@@ -256,7 +256,7 @@ source "board/beacon/beacon-rzg2m/Kconfig"
 source "board/hoperun/hihope-rzg2/Kconfig"
 source "board/silinux/ek874/Kconfig"
 source "board/renesas/rzg2l-dev/Kconfig"
-source "board/novtech/rzpi/Kconfig"
+source "board/renesas/rzpi/Kconfig"
 source "board/renesas/rzv2l-dev/Kconfig"
 source "board/renesas/rzg2lc-dev/Kconfig"
 source "board/renesas/rzg2ul-dev/Kconfig"
