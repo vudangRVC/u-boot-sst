@@ -23,7 +23,7 @@
 #include <command.h>
 
 #if !defined(CONFIG_TARGET_RZPI)
-#  error This platform support file is for the NovTech RZ/pi.
+#  error This platform support file is for the RZG2L-SBC board (Raspberry-Pi-like board).
 #endif
 
 DECLARE_GLOBAL_DATA_PTR;
