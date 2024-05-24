@@ -1,0 +1,20 @@
+if TARGET_RZPI
+
+config SYS_SOC
+	default "rmobile"
+
+config SYS_BOARD
+	default "rzpi"
+
+config SYS_VENDOR
+	default "renesas"
+
+config SYS_CONFIG_NAME
+	default "rzpi"
+
+config BOARD_SPECIFIC_OPTIONS
+        def_bool y
+        select BOARD_LATE_INIT
+        select LAST_STAGE_INIT
+
+endif

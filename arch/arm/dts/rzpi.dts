@@ -1,0 +1,139 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * Device Tree Source for the GR-Peach board
+ *
+ * Copyright (C) 2017 Jacopo Mondi <jacopo+renesas@jmondi.org>
+ * Copyright (C) 2016 Renesas Electronics
+ */
+
+/dts-v1/;
+#include <dt-bindings/gpio/gpio.h>
+#include "r9a07g044l.dtsi"
+#include "r9a07g044l-u-boot.dtsi"
+#include <dt-bindings/pinctrl/rzg2l-pinctrl.h>
+#include <configs/rzpi.h>
+
+/ {
+	model = "RZpi";
+	compatible = "renesas,r9a07g044l", "renesas,rzg2l";
+
+	aliases	{
+		serial0 = &scif0;
+	};
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+	};
+
+	memory@48000000 {
+		device_type = "memory";
+		/* first 128MB is reserved for secure area. */
+#if (ISSI_4Gb_DDR)
+		reg = <0 0x48000000 0 0x18000000>; //for ISSI DDR 4Gb
+#elif (ISSI_8Gb_DDR)
+		reg = <0 0x48000000 0 0x38000000>; //for ISSI DDR 8Gb
+#else
+#  error Missing memory side/type define
+#endif
+	};
+};
+
+&pinctrl {
+	eth0_pins: eth0 {
+		pinmux = <RZG2L_PINMUX(20, 0, 1)>, //TX_CLK
+				<RZG2L_PINMUX(20, 1, 1)>, //TX_EN
+				<RZG2L_PINMUX(20, 2, 1)>, //TXD0
+				<RZG2L_PINMUX(21, 0, 1)>, //TXD1
+				<RZG2L_PINMUX(21, 1, 1)>, //TXD2
+				<RZG2L_PINMUX(22, 0, 1)>, //TXD3
+				<RZG2L_PINMUX(24, 0, 1)>, //RX_CLK
+				<RZG2L_PINMUX(24, 1, 1)>, //RX_DV
+				<RZG2L_PINMUX(25, 0, 1)>, //RXD0
+				<RZG2L_PINMUX(25, 1, 1)>, //RXD1
+				<RZG2L_PINMUX(26, 0, 1)>, //RXD2
+				<RZG2L_PINMUX(26, 1, 1)>, //RXD3
+				<RZG2L_PINMUX(27, 1, 1)>, //MDC
+				<RZG2L_PINMUX(28, 0, 1)>; //MDIO
+	};
+
+	eth1_pins: eth1 {
+		pinmux = <RZG2L_PINMUX(29, 0, 1)>, //TX_CLK
+				<RZG2L_PINMUX(29, 1, 1)>, //TX_EN
+				<RZG2L_PINMUX(30, 0, 1)>, //TXD0
+				<RZG2L_PINMUX(30, 1, 1)>, //TXD1
+				<RZG2L_PINMUX(31, 0, 1)>, //TXD2
+				<RZG2L_PINMUX(31, 1, 1)>, //TXD3
+				<RZG2L_PINMUX(33, 1, 1)>, //RX_CLK
+				<RZG2L_PINMUX(34, 0, 1)>, //RX_DV
+				<RZG2L_PINMUX(34, 1, 1)>, //RXD0
+				<RZG2L_PINMUX(35, 0, 1)>, //RXD1
+				<RZG2L_PINMUX(35, 1, 1)>, //RXD2
+				<RZG2L_PINMUX(36, 0, 1)>; //RXD3
+	};
+};
+
+&xinclk {
+	clock-frequency = <24000000>;
+};
+
+&eth0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&eth0_pins>;
+	status = "okay";
+
+	phy-handle = <&phy0>;
+	phy-mode = "rgmii";
+	phy-index = <0>;
+	phy0: ethernet-phy@4 {
+		reg = <4>;
+	};
+};
+
+&eth1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&eth1_pins>;
+	alt-mdio-base = <0x11c20000>;
+	status = "okay";
+
+	phy-handle = <&phy1>;
+	phy-mode = "rgmii";
+	phy-index = <1>;
+	phy1: ethernet-phy@1 {
+		reg = <1>;
+	};
+};
+
+&i2c0 {
+	status = "okay";
+};
+
+&spibsc {
+	status = "okay";
+	compatible = "renesas,rpc-r8a77995";
+	num-cs = <2>;
+	#address-cells = <1>;
+	#size-cells = <0>;
+	spi-max-frequency = <50000000>;
+	bank-width = <2>;
+
+	flash0: spi-flash@0 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "jedec,spi-nor";
+		spi-max-frequency = <50000000>;
+		spi-tx-bus-width = <1>;
+		spi-rx-bus-width = <1>;
+		reg = <0>;
+		status = "okay";
+	};
+};
+
+&scif0 {
+	status = "okay";
+	clock = <100000000>;
+};
+
+&sdhi0 {
+	bus-width = <4>;
+	status = "okay";
+};
