@@ -86,17 +86,17 @@
 #else
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
-	"fdtfile=boot/uEnv.txt\0" \
+	"fdtfile=uEnv.txt\0" \
 	"image=Image \0" \
 	"mmcdev=0\0" \
-	"mmcpart=2\0" \
+	"mmcpart=1\0" \
 	"dtb_addr=0x48000000 \0" \
 	"dtbo_addr=0x48010000\0" \
 	"image_addr=0x48080000 \0" \
 	"env_addr=0x58000000 \0" \
 	"importbootenv=echo Importing environment from mmc${mmcdev} ...; " \
 		"env import -t ${env_addr} ${filesize}\0" \
-	"loadbootenv=ext4load mmc ${mmcdev}:${mmcpart} ${env_addr} ${fdtfile}\0" \
+	"loadbootenv=fatload mmc ${mmcdev}:${mmcpart} ${env_addr} ${fdtfile}\0" \
 	"envboot=mmc dev ${mmcdev}; " \
 		"if mmc rescan; then " \
 			"echo SD/MMC found on device ${mmcdev};" \
