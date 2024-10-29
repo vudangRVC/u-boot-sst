@@ -27,14 +27,7 @@
 
 	memory@48000000 {
 		device_type = "memory";
-		/* first 128MB is reserved for secure area. */
-#if (ISSI_4Gb_DDR)
-		reg = <0 0x48000000 0 0x18000000>; //for ISSI DDR 4Gb
-#elif (ISSI_8Gb_DDR)
-		reg = <0 0x48000000 0 0x38000000>; //for ISSI DDR 8Gb
-#else
-#  error Missing memory side/type define
-#endif
+		reg = <0 DDR_BASE_ADDR 0 DDR_AVAILABLE_SIZE>; 
 	};
 };
 

@@ -12,6 +12,21 @@
 #define ISSI_4Gb_DDR 0
 #define ISSI_8Gb_DDR 1
 
+
+// Total DDR size 
+#if (ISSI_4Gb_DDR)
+#define DDR_TOTAL_SIZE    0x20000000  
+#elif (ISSI_8Gb_DDR)
+#define DDR_TOTAL_SIZE    0x40000000  
+#else
+#  error Missing memory side/type define
+#endif
+
+#define DDR_BASE_ADDR    0x48000000
+// 128MB is reserved for secure area and 128MB is reserved for ECC memory 
+#define DDR_RESERVED_SIZE 0x10000000  // 256MB reserved (128MB secure + 128MB ECC)
+#define DDR_AVAILABLE_SIZE (DDR_TOTAL_SIZE - DDR_RESERVED_SIZE)
+
 #define CONFIG_REMAKE_ELF
 
 #ifdef CONFIG_SPL
