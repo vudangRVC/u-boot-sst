@@ -77,6 +77,9 @@ config R9A07G054L
 config R9A07G043U
 	bool "Renesas SoC RZ/G2UL"
 
+config R9A07Gx
+	bool "Renesas SoC RZ Multi Boards"
+
 endmenu
 
 choice
@@ -227,6 +230,10 @@ config TARGET_SMARC_RZG2UL
 	help
           Support for Renesas RZ/G2UL Dev Platform
 
+config TARGET_RZ_MULTI_BOARDS
+	bool "RZ multi boards"
+	help
+          Support for Renesas RZPI, SMARC RZV2L, SMARC RZG2L and RZV2H
 endchoice
 
 config SYS_SOC
@@ -243,6 +250,7 @@ source "board/beacon/beacon-rzg2m/Kconfig"
 source "board/hoperun/hihope-rzg2/Kconfig"
 source "board/silinux/ek874/Kconfig"
 source "board/renesas/rzg2l-dev/Kconfig"
+source "board/renesas/rz-multi-boards/Kconfig"
 source "board/renesas/rzpi/Kconfig"
 source "board/renesas/rzv2l-dev/Kconfig"
 source "board/renesas/rzg2lc-dev/Kconfig"

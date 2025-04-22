@@ -1,0 +1,15 @@
+if TARGET_RZ_MULTI_BOARDS
+
+config SYS_SOC
+	default "rmobile"
+
+config SYS_BOARD
+	default "rz-multi-boards"
+
+config SYS_VENDOR
+	default "renesas"
+
+config SYS_CONFIG_NAME
+	default "rz-multi-boards"
+
+endif
