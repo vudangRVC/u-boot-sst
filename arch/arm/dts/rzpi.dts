@@ -18,6 +18,7 @@
 	compatible = "renesas,r9a07g044l", "renesas,rzg2l";
 
 	aliases	{
+		spi0 = &spibsc;
 		serial0 = &scif0;
 	};
 
