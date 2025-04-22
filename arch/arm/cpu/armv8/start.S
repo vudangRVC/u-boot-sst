@@ -318,7 +318,7 @@ apply_a57_core_errata:
 ENDPROC(apply_core_errata)
 
 /*-----------------------------------------------------------------------*/
-
+#ifndef CONFIG_TARGET_RZ_MULTI_BOARDS
 WEAK(lowlevel_init)
 	mov	x29, lr			/* Save LR */
 
@@ -383,7 +383,7 @@ WEAK(smp_kick_all_cpus)
 #endif
 	ret
 ENDPROC(smp_kick_all_cpus)
-
+#endif
 /*-----------------------------------------------------------------------*/
 
 ENTRY(c_runtime_cpu_setup)

@@ -24,6 +24,12 @@ rcar_atf_boot_args:
 	.dword 0
 	.dword 0
 
+.data
+.align 3
+.globl board_id
+board_id:
+	.dword 0
+
 ENTRY(save_boot_params)
 	adr	x8, rcar_atf_boot_args
 	stp	x0, x1, [x8], #16
@@ -37,32 +43,65 @@ WEAK(s_init)
 ENDPROC(s_init)
 .popsection
 
+.text
 ENTRY(lowlevel_init)
 	mov	x29, lr			/* Save LR */
+
+	/* Load board_id from rcar_atf_boot_args[2] */
+	ldr x8, =rcar_atf_boot_args
+	add x8, x8, #16
+	ldr x0, [x8]
+	ldr x9, =board_id
+	str x0, [x9]
+	ldr w11, [x9]
+
+	cmp w11, #BOARD_ID_RZPI
+	b.eq set_gic_base_v2l
+
+	cmp w11, #BOARD_ID_RZG2L
+	b.eq set_gic_base_v2l
+
+	cmp w11, #BOARD_ID_RZV2L
+	b.eq set_gic_base_v2l
+
+	cmp w11, #BOARD_ID_RZV2H
+	ldr x0, =GICD_BASE_V2H
+	b continue_gic_init
+
+set_gic_base_v2l:
+	ldr x0, =GICD_BASE_V2L
+
+continue_gic_init:
 
 #ifndef CONFIG_ARMV8_MULTIENTRY
 	/*
 	 * For single-entry systems the lowlevel init is very simple.
 	 */
-	ldr	x0, =GICD_BASE
 	bl	gic_init_secure
 
 #else /* CONFIG_ARMV8_MULTIENTRY is set */
 
-#if defined(CONFIG_GICV2) || defined(CONFIG_GICV3)
 	branch_if_slave x0, 1f
-	ldr	x0, =GICD_BASE
 	bl	gic_init_secure
 1:
-#if defined(CONFIG_GICV3)
-	ldr	x0, =GICR_BASE
-	bl	gic_init_secure_percpu
-#elif defined(CONFIG_GICV2)
-	ldr	x0, =GICD_BASE
-	ldr	x1, =GICC_BASE
-	bl	gic_init_secure_percpu
-#endif
-#endif
+	/* Set GICR_BASE based on board ID for secure_percpu init */
+	cmp w11, #BOARD_ID_RZPI
+	b.eq 2f
+
+	cmp w11, #BOARD_ID_RZG2L
+	b.eq 2f
+
+	cmp w11, #BOARD_ID_RZV2L
+	b.eq 2f
+
+	ldr x0, =GICR_BASE_V2H
+	b 3f
+
+2:
+	ldr x0, =GICR_BASE_V2L
+
+3:
+	bl 	gic_init_secure_percpu
 
 	branch_if_master x0, x1, 2f
 
@@ -71,12 +110,7 @@ ENTRY(lowlevel_init)
 	 * This sync prevent salves observing incorrect
 	 * value of spin table and jumping to wrong place.
 	 */
-#if defined(CONFIG_GICV2) || defined(CONFIG_GICV3)
-#ifdef CONFIG_GICV2
-	ldr	x0, =GICC_BASE
-#endif
 	bl	gic_wait_for_interrupt
-#endif
 
 	/*
 	 * All slaves will enter EL2 and optionally EL1.
@@ -101,3 +135,34 @@ lowlevel_in_el1:
 	mov	lr, x29			/* Restore LR */
 	ret
 ENDPROC(lowlevel_init)
+
+ENTRY(smp_kick_all_cpus)
+	/* Kick secondary cpus up by SGI 0 interrupt */
+#if defined(CONFIG_GICV2) || defined(CONFIG_GICV3)
+	ldr x8, =rcar_atf_boot_args
+	add x8, x8, #16
+	ldr x0, [x8]
+	ldr x9, =board_id
+	str x0, [x9]
+	ldr w11, [x9]
+
+	cmp w11, #BOARD_ID_RZPI
+	b.eq 1f
+
+	cmp w11, #BOARD_ID_RZG2L
+	b.eq 1f
+
+	cmp w11, #BOARD_ID_RZV2L
+	b.eq 1f
+
+	ldr x0, =GICD_BASE_V2H
+	b 2f
+
+1:
+	ldr x0, =GICD_BASE_V2L
+
+2:
+	b	gic_kick_secondary_cpus
+#endif
+	ret
+ENDPROC(smp_kick_all_cpus)
