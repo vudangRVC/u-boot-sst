@@ -240,7 +240,7 @@ struct eqos_tegra186_regs {
 
 #define EQOS_AUTO_CAL_STATUS_ACTIVE			BIT(31)
 
-#if IS_ENABLED(CONFIG_TARGET_RZ_MULTI_BOARDS)
+#if IS_ENABLED(CONFIG_TARGET_RZ_CMN)
 /* These registers are rzv2h-specific */
 #define CPG_BASE					0x10420000
 #define CPG_CSDIV0					(CPG_BASE + 0x0500)
@@ -2130,7 +2130,7 @@ static const struct udevice_id eqos_ids[] = {
 		.data = (ulong)&eqos_imx_config
 	},
 #endif
-#if IS_ENABLED(CONFIG_TARGET_RZ_MULTI_BOARDS)
+#if IS_ENABLED(CONFIG_TARGET_RZ_CMN)
 	{
 		.compatible = "renesas,rzv2h-eqos",
 		.data = (ulong)&eqos_rzv2h_config

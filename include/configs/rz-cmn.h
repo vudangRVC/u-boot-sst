@@ -3,8 +3,8 @@
  * Copyright (C) 2022 Renesas Electronics Corporation
  */
 
-#ifndef __RZ_MULTI_BOARD_H
-#define __RZ_MULTI_BOARD_H
+#ifndef __RZ_CMN_H
+#define __RZ_CMN_H
 
 #include <asm/arch/rmobile.h>
 
@@ -79,4 +79,4 @@
 /* Ethernet RAVB */
 #define CONFIG_BITBANGMII_MULTI
 
-#endif /* __RZ_MULTI_BOARD_H */
+#endif /* __RZ_CMN_H */

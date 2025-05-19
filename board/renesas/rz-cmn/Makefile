@@ -6,4 +6,4 @@
 # SPDX-License-Identifier: GPL-2.0+
 #
 
-obj-y	:= rz-multi-boards.o ../rcar-common/common.o
+obj-y	:= rz-cmn.o ../rcar-common/common.o

@@ -318,7 +318,7 @@ apply_a57_core_errata:
 ENDPROC(apply_core_errata)
 
 /*-----------------------------------------------------------------------*/
-#ifndef CONFIG_TARGET_RZ_MULTI_BOARDS
+#ifndef CONFIG_TARGET_RZ_CMN
 WEAK(lowlevel_init)
 	mov	x29, lr			/* Save LR */
 
