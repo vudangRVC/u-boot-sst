@@ -152,19 +152,19 @@ extern u64 board_id;
 
 int board_fit_config_name_match(const char *name)
 {
-	if ((board_id == BOARD_ID_RZV2H) &&
+	if ((board_id == BOARD_ID_RZV2H_EVK) &&
 		!strcmp(name, "rzv2h-evk-ver1"))
 		return 0;
 
-	if ((board_id == BOARD_ID_RZV2L) &&
+	if ((board_id == BOARD_ID_RZV2L_EVK) &&
 		!strcmp(name, "smarc-rzv2l"))
 		return 0;
 
-	if ((board_id == BOARD_ID_RZG2L) &&
+	if ((board_id == BOARD_ID_RZG2L_EVK) &&
 		!strcmp(name, "smarc-rzg2l"))
 		return 0;
 
-	if ((board_id == BOARD_ID_RZPI) &&
+	if ((board_id == BOARD_ID_RZG2L_SBC) &&
 		!strcmp(name, "rzpi"))
 		return 0;
 
@@ -303,11 +303,11 @@ void s_init_rzg2l()
 
 void s_init(void)
 {
-	if (board_id == BOARD_ID_RZV2H) {
+	if (board_id == BOARD_ID_RZV2H_EVK) {
 		s_init_v2h();
-	} else if (board_id == BOARD_ID_RZPI) {
+	} else if (board_id == BOARD_ID_RZG2L_SBC) {
 		s_init_rzpi();
-	} else if (board_id == BOARD_ID_RZV2L || board_id == BOARD_ID_RZG2L) {
+	} else if (board_id == BOARD_ID_RZV2L_EVK || board_id == BOARD_ID_RZG2L_EVK) {
 		s_init_rzv2l();
 	} else {
 		return;
@@ -517,7 +517,7 @@ int board_early_init_f(void)
 
 int board_mmc_init(struct bd_info *bis)
 {
-	if (board_id == BOARD_ID_RZPI)
+	if (board_id == BOARD_ID_RZG2L_SBC)
 		return sh_sdhi_init(CONFIG_SYS_SH_SDHI0_BASE, 0, SH_SDHI_QUIRK_64BIT_BUF);
 	else
 		return -1;
@@ -528,10 +528,10 @@ int board_init(void)
 	/* adress of boot parameters */
 	gd->bd->bi_boot_params = CONFIG_SYS_TEXT_BASE + 0x50000;
 
-	if(board_id == BOARD_ID_RZV2L || board_id == BOARD_ID_RZG2L)
+	if(board_id == BOARD_ID_RZV2L_EVK || board_id == BOARD_ID_RZG2L_EVK)
 	{
 		board_usb_init_rzv2l();
-	} else if (board_id == BOARD_ID_RZV2H)
+	} else if (board_id == BOARD_ID_RZV2H_EVK)
 	{
 		board_usb_init_rzv2h();
 		/* Initialize PMIC I2C devices */
@@ -621,7 +621,7 @@ static void setup_pins(void)
 
 int board_late_init(void)
 {
-	if(board_id == BOARD_ID_RZPI)
+	if(board_id == BOARD_ID_RZG2L_SBC)
 	{
 		uchar enetaddrs[ETH_ALEN * 2];
 		struct udevice *bus, *chip;
@@ -649,7 +649,7 @@ int board_late_init(void)
 
 int last_stage_init(void)
 {	
-	if(board_id == BOARD_ID_RZPI)
+	if(board_id == BOARD_ID_RZG2L_SBC)
 	{
 		configure_gpy111_phys();
 		enable_32khz_clock();
@@ -668,7 +668,7 @@ static int do_set_mac_addresses
  char *const     argv[]
 )
 {
-	if(board_id == BOARD_ID_RZPI)
+	if(board_id == BOARD_ID_RZG2L_SBC)
 	{
 		uchar           enetaddrs[ETH_ALEN * 2];
 		struct udevice *bus, *chip;

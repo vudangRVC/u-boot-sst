@@ -55,16 +55,16 @@ ENTRY(lowlevel_init)
 	str x0, [x9]
 	ldr w11, [x9]
 
-	cmp w11, #BOARD_ID_RZPI
+	cmp w11, #BOARD_ID_RZG2L_SBC
 	b.eq set_gic_base_v2l
 
-	cmp w11, #BOARD_ID_RZG2L
+	cmp w11, #BOARD_ID_RZG2L_EVK
 	b.eq set_gic_base_v2l
 
-	cmp w11, #BOARD_ID_RZV2L
+	cmp w11, #BOARD_ID_RZV2L_EVK
 	b.eq set_gic_base_v2l
 
-	cmp w11, #BOARD_ID_RZV2H
+	cmp w11, #BOARD_ID_RZV2H_EVK
 	ldr x0, =GICD_BASE_V2H
 	b continue_gic_init
 
@@ -85,13 +85,13 @@ continue_gic_init:
 	bl	gic_init_secure
 1:
 	/* Set GICR_BASE based on board ID for secure_percpu init */
-	cmp w11, #BOARD_ID_RZPI
+	cmp w11, #BOARD_ID_RZG2L_SBC
 	b.eq 2f
 
-	cmp w11, #BOARD_ID_RZG2L
+	cmp w11, #BOARD_ID_RZG2L_EVK
 	b.eq 2f
 
-	cmp w11, #BOARD_ID_RZV2L
+	cmp w11, #BOARD_ID_RZV2L_EVK
 	b.eq 2f
 
 	ldr x0, =GICR_BASE_V2H
@@ -146,13 +146,13 @@ ENTRY(smp_kick_all_cpus)
 	str x0, [x9]
 	ldr w11, [x9]
 
-	cmp w11, #BOARD_ID_RZPI
+	cmp w11, #BOARD_ID_RZG2L_SBC
 	b.eq 1f
 
-	cmp w11, #BOARD_ID_RZG2L
+	cmp w11, #BOARD_ID_RZG2L_EVK
 	b.eq 1f
 
-	cmp w11, #BOARD_ID_RZV2L
+	cmp w11, #BOARD_ID_RZV2L_EVK
 	b.eq 1f
 
 	ldr x0, =GICD_BASE_V2H

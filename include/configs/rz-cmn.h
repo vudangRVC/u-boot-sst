@@ -14,10 +14,13 @@
 #define CONFIG_SPL_TARGET	"spl/u-boot-spl.scif"
 #endif
 
-#define BOARD_ID_RZV2H					22
-#define BOARD_ID_RZV2L					33
-#define BOARD_ID_RZPI					44
-#define BOARD_ID_RZG2L					55
+/* RZ board id defines, it will be used to compare with the parameter
+ * passed by ATF to decide how to configure U-Boot
+ */
+#define BOARD_ID_RZG2L_EVK				0x10
+#define BOARD_ID_RZG2L_SBC				0x11
+#define BOARD_ID_RZV2L_EVK				0x20
+#define BOARD_ID_RZV2H_EVK				0x30
 
 /* boot option */
 
