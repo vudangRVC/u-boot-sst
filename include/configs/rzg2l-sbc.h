@@ -3,8 +3,8 @@
  * Copyright (C) 2015 Renesas Electronics Corporation
  */
 
-#ifndef __RZPI_H
-#define __RZPI_H
+#ifndef __RZG2L_SBC_H
+#define __RZG2L_SBC_H
 
 #include <asm/arch/rmobile.h>
 
@@ -81,15 +81,15 @@
 #ifndef CONFIG_CMD_IMPORTENV
 #define CONFIG_CMD_IMPORTENV
 #endif
-#define RZPI_UENV_FDTO_SUPPORT
+#define RZG2L_SBC_UENV_FDTO_SUPPORT
 
-#ifndef RZPI_UENV_FDTO_SUPPORT
+#ifndef RZG2L_SBC_UENV_FDTO_SUPPORT
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
 	"bootm_size=0x10000000 \0" \
 	"prodsdbootargs=setenv bootargs rw rootwait earlycon root=/dev/mmcblk0p2\0" \
 	"bootimage=booti 0x48080000 - 0x48000000\0" \
-	"bootcmd_load=ext4load mmc 0:2 0x48080000 boot/Image;ext4load mmc 0:2 0x48000000 boot/rzpi.dtb;run prodsdbootargs\0" \
+	"bootcmd_load=ext4load mmc 0:2 0x48080000 boot/Image;ext4load mmc 0:2 0x48000000 boot/rzg2l-sbc.dtb;run prodsdbootargs\0" \
 	"fiperase=sf erase 1d000 b0000\0" \
 	"fipload=mmc rescan;sf probe; fatload mmc 0:1 $loadaddr fip.bin\0" \
 	"fipwrite=sf write $loadaddr 1d200 $filesize\0" \
@@ -130,4 +130,4 @@
 /* Ethernet RAVB */
 #define CONFIG_BITBANGMII_MULTI
 
-#endif /* __RZPI_H */
+#endif /* __RZG2L_SBC_H */
