@@ -69,13 +69,29 @@
 #define CONFIG_BOARD_SIZE_LIMIT		1048576
 
 /* ENV setting */
-#define CFG_EXTRA_ENV_SETTINGS	\
-	"bootm_size=0x10000000\0"
+#define CFG_EXTRA_ENV_SETTINGS \
+	"fdtfile=uEnv.txt\0" \
+	"image=Image \0" \
+	"mmcdev=0\0" \
+	"mmcpart=1\0" \
+	"dtb_addr=0x48000000 \0" \
+	"dtbo_addr=0x48010000\0" \
+	"image_addr=0x48080000 \0" \
+	"env_addr=0x58000000 \0" \
+	"importbootenv=echo Importing environment from mmc${mmcdev} ...; " \
+		"env import -t ${env_addr} ${filesize}\0" \
+	"loadbootenv=fatload mmc ${mmcdev}:${mmcpart} ${env_addr} ${fdtfile}\0" \
+	"envboot=mmc dev ${mmcdev}; " \
+		"if mmc rescan; then " \
+			"echo SD/MMC found on device ${mmcdev};" \
+			"if run loadbootenv; then " \
+				"echo Loaded env from ${fdtfile};" \
+				"run importbootenv;" \
+			"fi;" \
+		"fi;\0" \
+	"bootimage=booti ${image_addr} - ${dtb_addr} \0"
 
-#define CONFIG_BOOTCOMMAND	\
-	"tftp 0x48080000 Image; " \
-	"tftp 0x48000000 Image-"CONFIG_DEFAULT_FDT_FILE"; " \
-	"booti 0x48080000 - 0x48000000"
+#define CONFIG_BOOTCOMMAND	"run envboot;run prodsdboot"
 
 /* For board */
 /* Ethernet RAVB */
