@@ -150,6 +150,26 @@ DECLARE_GLOBAL_DATA_PTR;
 extern u64 rcar_atf_boot_args[];
 extern u64 board_id;
 
+void setup_board_id_at_runtime(void) {
+	switch (board_id) {
+		case BOARD_ID_RZV2H_EVK:
+			env_set("board_id", "rzv2h-evk");
+			break;
+		case BOARD_ID_RZV2L_EVK:
+			env_set("board_id", "rzv2l-evk");
+			break;
+		case BOARD_ID_RZG2L_EVK:
+			env_set("board_id", "rzg2l-evk");
+			break;
+		case BOARD_ID_RZG2L_SBC:
+			env_set("board_id", "rzg2l-sbc");
+			break;
+		default:
+			printf("Runtime: board_id not set for board_id = %llu\n", board_id);
+			break;
+	}
+}
+
 int board_fit_config_name_match(const char *name)
 {
 	if ((board_id == BOARD_ID_RZV2H_EVK) &&
@@ -644,6 +664,7 @@ int board_late_init(void)
 #ifdef CONFIG_RENESAS_RZG2LWDT
 	rzg2l_reinitr_wdt();
 #endif
+	setup_board_id_at_runtime();
 	return 0;
 }
 
