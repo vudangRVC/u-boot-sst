@@ -23,6 +23,8 @@
 #include <command.h>
 #include <asm/sections.h>
 #include <linux/delay.h>
+#include <linux/unaligned/be_byteshift.h>
+#include <spi_flash.h>
 #ifdef CONFIG_RENESAS_RZG2LWDT
 #include <wdt.h>
 #include <rzg2l_wdt.h>
@@ -146,28 +148,148 @@ DECLARE_GLOBAL_DATA_PTR;
 #define COMMCTRL						0x800
 #define HcRhDescriptorA					0x048
 #define LPSTS							0x102
+#define MAX_SIZE_LEN					256
+
+/* QSPI */
+#define QSPI_BOARD_INFO_LOAD_ADDR		0x48000000
+#define QSPI_BOARD_INFO_OFFSET 			0x1C700
+#define QSPI_BOARD_INFO_OFFSET_V2H		0x120000
 
 extern u64 rcar_atf_boot_args[];
 extern u64 board_id;
 
-void setup_board_id_at_runtime(void) {
+/* Platform descriptor */
+typedef struct __attribute__((packed)) platform_desc {
+	uint32_t model_id;
+	uint32_t revision_minor : 16;
+	uint32_t revision_major : 16;
+	char model_string[MAX_SIZE_LEN];
+	char mfg_name[MAX_SIZE_LEN];
+
+	uint32_t bl2_loc        : 4;
+	uint32_t bl2_dtb_loc    : 4;
+	uint32_t u_boot_loc     : 4;
+	uint32_t u_boot_dtb_loc : 4;
+	uint32_t kernel_loc     : 4;
+	uint32_t kernel_dtb_loc : 4;
+	uint32_t res_loc        : 4;    // reserved
+	uint32_t res1_loc       : 4;    // reserved
+
+	uint32_t bl2_id         : 4;
+	uint32_t bl2_dtb_id     : 4;
+	uint32_t u_boot_id      : 4;
+	uint32_t u_boot_dtb_id  : 4;
+	uint32_t kernel_id      : 4;
+	uint32_t kernel_dtb_id  : 4;
+	uint32_t res_id         : 4;    // reserved
+	uint32_t res1_id        : 4;    // reserved
+
+	uint8_t bl2_desc[MAX_SIZE_LEN];
+	uint8_t bl2_dtb_desc[MAX_SIZE_LEN];
+	uint8_t u_boot_desc[MAX_SIZE_LEN];
+	uint8_t u_boot_dtb_desc[MAX_SIZE_LEN];
+	uint8_t kernel_desc[MAX_SIZE_LEN];
+	uint8_t kernel_dtb_desc[MAX_SIZE_LEN];
+} platform_desc_t;
+
+/**
+ * setup_uboot_info_from_qspi - Load board-specific U-Boot environment from QSPI
+ *
+ * This function probes the QSPI SPI flash, reads the platform descriptor
+ * structure from a board-specific offset, and populates common U-Boot
+ * environment variables such as board_id, mmcdev, mmcpart, boot arguments,
+ * image address, and device tree addresses.
+ *
+ * Data in the flash is stored in big-endian format; manual byte assembly is
+ * currently used to extract 32-bit values.
+ *
+ */
+int setup_uboot_info_from_qspi(void)
+{
+	int ret = 0;
+	struct spi_flash *flash;
+	platform_desc_t *board_info = (platform_desc_t *)(uintptr_t)QSPI_BOARD_INFO_LOAD_ADDR;
+	char tmp_buf[256];
+	uint32_t tmp_val;
+
+	flash = spi_flash_probe(CONFIG_ENV_SPI_BUS, CONFIG_ENV_SPI_CS,
+				     CONFIG_ENV_SPI_MAX_HZ, CONFIG_ENV_SPI_MODE);
+	if (!flash) {
+		printf("Failed to probe SPI flash\n");
+		ret = -ENODEV;
+		goto cleanup;
+	}
+
 	switch (board_id) {
 		case BOARD_ID_RZV2H_EVK:
-			env_set("board_id", "rzv2h-evk");
+			ret = spi_flash_read(flash, QSPI_BOARD_INFO_OFFSET_V2H, CONFIG_ENV_SIZE, board_info);
 			break;
 		case BOARD_ID_RZV2L_EVK:
-			env_set("board_id", "rzv2l-evk");
-			break;
 		case BOARD_ID_RZG2L_EVK:
-			env_set("board_id", "rzg2l-evk");
-			break;
 		case BOARD_ID_RZG2L_SBC:
-			env_set("board_id", "rzg2l-sbc");
+			ret = spi_flash_read(flash, QSPI_BOARD_INFO_OFFSET, CONFIG_ENV_SIZE, board_info);
 			break;
 		default:
-			printf("Runtime: board_id not set for board_id = %llu\n", board_id);
-			break;
+			printf("Runtime: unknown or unsupported board_id = %llu\n", board_id);
+			ret = -EINVAL;
+			goto cleanup;
 	}
+
+	if (ret) {
+		printf("Failed to read SPI flash: %d\n", ret);
+		ret = -EIO;
+		goto cleanup;
+	}
+
+	/*
+	 * Common u-boot env variables section.
+	 */
+	snprintf(tmp_buf, sizeof(tmp_buf), "%s", board_info->model_string);
+	env_set("model_string", tmp_buf);
+
+	snprintf(tmp_buf, sizeof(tmp_buf), "%u", board_info->revision_minor);
+	env_set("revision_minor", tmp_buf);
+
+	snprintf(tmp_buf, sizeof(tmp_buf), "%u", board_info->revision_major);
+	env_set("revision_major", tmp_buf);
+
+	snprintf(tmp_buf, sizeof(tmp_buf), "%u", board_info->u_boot_desc[0]);
+	env_set("mmcdev", tmp_buf);
+
+	snprintf(tmp_buf, sizeof(tmp_buf), "%u", board_info->u_boot_desc[1]);
+	env_set("mmcpart", tmp_buf);
+
+	snprintf(tmp_buf, sizeof(tmp_buf), "setenv bootargs rw rootwait earlycon root=/dev/mmcblk%up%u", board_info->u_boot_desc[2], board_info->u_boot_desc[3]);
+	env_set("mmc_args", tmp_buf);
+
+	/* Extract BE32 from u_boot_desc[4..7] for image_addr */
+	tmp_val = get_unaligned_be32(&board_info->u_boot_desc[4]);
+	snprintf(tmp_buf, sizeof(tmp_buf), "0x%08X", tmp_val);
+	env_set("image_addr", tmp_buf);
+
+	/* Extract BE32 from u_boot_desc[8..11] for env_addr */
+	tmp_val = get_unaligned_be32(&board_info->u_boot_desc[8]);
+	snprintf(tmp_buf, sizeof(tmp_buf), "0x%08X", tmp_val);
+	env_set("env_addr", tmp_buf);
+
+	/*
+	 * Extract BE32 from u_boot_dtb_desc for device tree section.
+	 */
+	tmp_val = get_unaligned_be32(&board_info->u_boot_dtb_desc[0]);
+	snprintf(tmp_buf, sizeof(tmp_buf), "0x%08X", tmp_val);
+	env_set("dtb_addr", tmp_buf);
+
+	/* Only rzg2l-sbc has dtb overlays */
+	if (BOARD_ID_RZG2L_SBC == board_id) {
+		tmp_val = get_unaligned_be32(&board_info->u_boot_dtb_desc[4]);
+		snprintf(tmp_buf, sizeof(tmp_buf), "0x%08X", tmp_val);
+		env_set("dtbo_addr", tmp_buf);
+	}
+
+cleanup:
+	if (flash)
+		spi_flash_free(flash);
+	return ret;
 }
 
 int board_fit_config_name_match(const char *name)
@@ -704,7 +826,10 @@ int board_late_init(void)
 #ifdef CONFIG_RENESAS_RZG2LWDT
 	rzg2l_reinitr_wdt();
 #endif
-	setup_board_id_at_runtime();
+	if (setup_uboot_info_from_qspi()) {
+		printf("Failed to initialize U-Boot env from QSPI");
+	}
+
 	return 0;
 }
 
