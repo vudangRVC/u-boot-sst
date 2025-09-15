@@ -621,7 +621,7 @@ static void s_init_rzg2l_sbc(void)
 
 void s_init(void)
 {
-	if (board_id == BOARD_ID_RZV2H_EVK || board_id == BOARD_ID_RZV2H_RDK) {
+	if (board_id == BOARD_ID_RZV2H_EVK || board_id == BOARD_ID_RZV2H_RDK || board_id == BOARD_ID_RZV2H_SBC) {
 		s_init_rzv2h();
 	} else if (board_id == BOARD_ID_RZG2L_SBC) {
 		s_init_rzg2l_sbc();
@@ -849,7 +849,7 @@ int board_init(void)
 	if(board_id == BOARD_ID_RZV2L_EVK || board_id == BOARD_ID_RZG2L_EVK)
 	{
 		board_usb_init_rzg2l();
-	} else if (board_id == BOARD_ID_RZV2H_EVK)
+	} else if (board_id == BOARD_ID_RZV2H_EVK || board_id == BOARD_ID_RZV2H_SBC)
 	{
 		board_usb_init_rzv2h();
 		/* Initialize PMIC I2C devices */
