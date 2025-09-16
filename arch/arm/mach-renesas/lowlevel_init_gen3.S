@@ -16,25 +16,30 @@
 #include <linux/linkage.h>
 #include <asm/macro.h>
 
-.align 8
-.globl	rcar_atf_boot_args
+	.align  8
+	.globl  rcar_atf_boot_args
 rcar_atf_boot_args:
-	.dword 0
-	.dword 0
-	.dword 0
-	.dword 0
+	.dword  0      /* x0 */
+	.dword  0      /* x1 */
+	.dword  0      /* x2 (legacy: board_id/model) */
+	.dword  0      /* x3 (new: soc_id) */
 
-.data
-.align 3
-.globl board_id
+	.data
+	.align  3
+	.globl  board_id
 board_id:
-	.dword 0
+	.dword  0
+
+	.align  3
+	.globl  soc_id
+soc_id:
+	.dword  0
 
 ENTRY(save_boot_params)
-	adr	x8, rcar_atf_boot_args
-	stp	x0, x1, [x8], #16
-	stp	x2, x3, [x8], #16
-	b	save_boot_params_ret
+	adr     x8, rcar_atf_boot_args
+	stp     x0, x1, [x8], #16
+	stp     x2, x3, [x8], #16
+	b       save_boot_params_ret
 ENDPROC(save_boot_params)
 
 .pushsection .text.s_init, "ax"
@@ -47,61 +52,79 @@ ENDPROC(s_init)
 ENTRY(lowlevel_init)
 	mov	x29, lr			/* Save LR */
 
-	/* Load board_id from rcar_atf_boot_args[2] */
+	/* board_id <= arg2 (x2) for legacy users */
 	ldr x8, =rcar_atf_boot_args
-	add x8, x8, #16
+	add x8, x8, #16                     /* 2 * 8 = offset to x2 */
 	ldr x0, [x8]
 	ldr x9, =board_id
 	str x0, [x9]
-	ldr w11, [x9]
+	/* soc_id <= arg3 (x3) */
+	ldr x8, =rcar_atf_boot_args
+	add x8, x8, #24                     /* 3 * 8 = offset to x3 */
+	ldr x0, [x8]
+	ldr x9, =soc_id
+	str x0, [x9]
+	ldr w11, [x9]                       /* w11 = soc_id (32-bit) */
+	
+	/* ---------- Select GICD base explicitly by SoC ---------- */
+#if !DEBUG_RZG2L_FPGA
+	mov		w10, #RZ_SOC_RZG2L
+	cmp		w11, w10
+	b.eq	set_gicd_g2l
 
-	cmp w11, #BOARD_ID_RZG2L_SBC
-	b.eq set_gic_base_v2l
+	mov		w10, #RZ_SOC_RZV2L
+	cmp		w11, w10
+	b.eq	set_gicd_g2l
 
-	cmp w11, #BOARD_ID_RZG2L_EVK
-	b.eq set_gic_base_v2l
+	mov		w10, #RZ_SOC_RZV2H
+	cmp		w11, w10
+	b.eq	set_gicd_v2h
 
-	cmp w11, #BOARD_ID_RZV2L_EVK
-	b.eq set_gic_base_v2l
+set_gicd_default:
+	ldr		x0, =GICD_BASE_RZG2L
+	b		continue_gic_init
 
-	cmp w11, #BOARD_ID_RZV2H_EVK
-	ldr x0, =GICD_BASE_RZV2H
-	b continue_gic_init
+set_gicd_g2l:
+	ldr		x0, =GICD_BASE_RZG2L
+	b		continue_gic_init
 
-set_gic_base_v2l:
-	ldr x0, =GICD_BASE_RZV2L
+set_gicd_v2h:
+	ldr		x0, =GICD_BASE_RZV2H
 
 continue_gic_init:
 
 #ifndef CONFIG_ARMV8_MULTIENTRY
-	/*
-	 * For single-entry systems the lowlevel init is very simple.
-	 */
-	bl	gic_init_secure
-
-#else /* CONFIG_ARMV8_MULTIENTRY is set */
-
+	bl		gic_init_secure
+#else
 	branch_if_slave x0, 1f
 	bl	gic_init_secure
 1:
-	/* Set GICR_BASE based on board ID for secure_percpu init */
-	cmp w11, #BOARD_ID_RZG2L_SBC
-	b.eq 2f
+	/* Set GICR_BASE based on SoC ID for secure_percpu init */
+	mov		w10, #RZ_SOC_RZG2L
+	cmp		w11, w10
+	b.eq	set_gicr_g2l
 
-	cmp w11, #BOARD_ID_RZG2L_EVK
-	b.eq 2f
+	mov		w10, #RZ_SOC_RZV2L
+	cmp		w11, w10
+	b.eq	set_gicr_g2l
 
-	cmp w11, #BOARD_ID_RZV2L_EVK
-	b.eq 2f
+	mov		w10, #RZ_SOC_RZV2H
+	cmp		w11, w10
+	b.eq	set_gicr_v2h
 
-	ldr x0, =GICR_BASE_RZV2H
-	b 3f
+set_gicr_default:
+	ldr		x0, =GICR_BASE_RZG2L
+	b		do_gicr
 
-2:
-	ldr x0, =GICR_BASE_RZV2L
+set_gicr_g2l:
+	ldr		x0, =GICR_BASE_RZG2L
+	b		do_gicr
 
-3:
-	bl 	gic_init_secure_percpu
+set_gicr_v2h:
+	ldr		x0, =GICR_BASE_RZV2H
+
+do_gicr:
+	bl		gic_init_secure_percpu
 
 	branch_if_master x0, 2f
 
@@ -112,12 +135,10 @@ continue_gic_init:
 	 */
 	bl	gic_wait_for_interrupt
 
-	/*
-	 * All slaves will enter EL2 and optionally EL1.
-	 */
-	adr	x4, lowlevel_in_el2
-	ldr	x5, =ES_TO_AARCH64
-	bl	armv8_switch_to_el2
+	/* Enter EL2 (and optionally EL1) */
+	adr		x4, lowlevel_in_el2
+	ldr		x5, =ES_TO_AARCH64
+	bl		armv8_switch_to_el2
 
 lowlevel_in_el2:
 #ifdef CONFIG_ARMV8_SWITCH_TO_EL1
@@ -128,6 +149,7 @@ lowlevel_in_el2:
 lowlevel_in_el1:
 #endif
 #endif /* CONFIG_ARMV8_MULTIENTRY */
+#endif /* !DEBUG_RZG2L_FPGA */
 
 	bl      s_init
 
@@ -139,27 +161,35 @@ ENDPROC(lowlevel_init)
 ENTRY(smp_kick_all_cpus)
 	/* Kick secondary cpus up by SGI 0 interrupt */
 #if defined(CONFIG_GICV2) || defined(CONFIG_GICV3)
-	ldr x8, =rcar_atf_boot_args
-	add x8, x8, #16
-	ldr x0, [x8]
-	ldr x9, =board_id
-	str x0, [x9]
-	ldr w11, [x9]
+	ldr		x8, =rcar_atf_boot_args
+	add		x8, x8, #24
+	ldr		x0, [x8]
+	ldr		x9, =soc_id
+	str		x0, [x9]
+	ldr		w11, [x9]
 
-	cmp w11, #BOARD_ID_RZG2L_SBC
-	b.eq 1f
+	mov		w10, #RZ_SOC_RZG2L
+	cmp		w11, w10
+	b.eq	use_g2l_gicd
 
-	cmp w11, #BOARD_ID_RZG2L_EVK
-	b.eq 1f
+	mov		w10, #RZ_SOC_RZV2L
+	cmp		w11, w10
+	b.eq	use_g2l_gicd
 
-	cmp w11, #BOARD_ID_RZV2L_EVK
-	b.eq 1f
+	mov		w10, #RZ_SOC_RZV2H
+	cmp		w11, w10
+	b.eq	use_v2h_gicd
 
-	ldr x0, =GICD_BASE_RZV2H
-	b 2f
+	/* default */
+	ldr		x0, =GICD_BASE_RZG2L
+	b		2f
 
-1:
-	ldr x0, =GICD_BASE_RZV2L
+use_g2l_gicd:
+	ldr		x0, =GICD_BASE_RZG2L
+	b		2f
+
+use_v2h_gicd:
+	ldr		x0, =GICD_BASE_RZV2H
 
 2:
 	b	gic_kick_secondary_cpus
