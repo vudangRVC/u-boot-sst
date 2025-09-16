@@ -7,6 +7,7 @@
 #define __RZ_CMN_H
 
 #include <asm/arch/renesas.h>
+#include <configs/rz-cmn_env.h>
 
 #define CONFIG_REMAKE_ELF
 
@@ -70,20 +71,21 @@
 
 /* ENV setting */
 #define CFG_EXTRA_ENV_SETTINGS \
-	"fdtfile=uEnv.txt\0" \
+	"bootenvfile=uEnv.txt\0" \
 	"image=Image \0" \
 	"importbootenv=echo Importing environment from mmc${mmcdev} ...; " \
 		"env import -t ${env_addr} ${filesize}\0" \
-	"loadbootenv=fatload mmc ${mmcdev}:${mmcpart} ${env_addr} ${fdtfile}\0" \
+	"loadbootenv=fatload mmc ${mmcdev}:${mmcpart} ${env_addr} ${bootenvfile}\0" \
 	"envboot=mmc dev ${mmcdev}; " \
 		"if mmc rescan; then " \
 			"echo SD/MMC found on device ${mmcdev};" \
 			"if run loadbootenv; then " \
-				"echo Loaded env from ${fdtfile};" \
+				"echo Loaded env from ${bootenvfile};" \
 				"run importbootenv;" \
 			"fi;" \
 		"fi;\0" \
-	"bootimage=booti ${image_addr} - ${dtb_addr} \0"
+	"bootimage=booti ${image_addr} - ${dtb_addr} \0" \
+	RZ_ENV_DEFAULTS
 
 #define CONFIG_BOOTCOMMAND	"run envboot;run prodsdboot"
 
