@@ -157,6 +157,7 @@ DECLARE_GLOBAL_DATA_PTR;
 
 extern u64 rcar_atf_boot_args[];
 extern u64 board_id;
+extern u64 soc_id;
 
 /* Platform descriptor */
 typedef struct __attribute__((packed)) platform_desc {
@@ -220,17 +221,16 @@ int setup_uboot_info_from_qspi(void)
 		goto cleanup;
 	}
 
-	switch (board_id) {
-		case BOARD_ID_RZV2H_EVK:
+	switch (soc_id) {
+		case RZ_SOC_RZV2H:
 			ret = spi_flash_read(flash, QSPI_BOARD_INFO_OFFSET_V2H, CONFIG_ENV_SIZE, board_info);
 			break;
-		case BOARD_ID_RZV2L_EVK:
-		case BOARD_ID_RZG2L_EVK:
-		case BOARD_ID_RZG2L_SBC:
+		case RZ_SOC_RZG2L:
+		case RZ_SOC_RZV2L:
 			ret = spi_flash_read(flash, QSPI_BOARD_INFO_OFFSET, CONFIG_ENV_SIZE, board_info);
 			break;
 		default:
-			printf("Runtime: unknown or unsupported board_id = %llu\n", board_id);
+			printf("Runtime: unknown or unsupported soc_id = %llu\n", soc_id);
 			ret = -EINVAL;
 			goto cleanup;
 	}
@@ -290,27 +290,6 @@ cleanup:
 	if (flash)
 		spi_flash_free(flash);
 	return ret;
-}
-
-int board_fit_config_name_match(const char *name)
-{
-	if ((board_id == BOARD_ID_RZV2H_EVK) &&
-		!strcmp(name, "rzv2h-evk-ver1"))
-		return 0;
-
-	if ((board_id == BOARD_ID_RZV2L_EVK) &&
-		!strcmp(name, "smarc-rzv2l"))
-		return 0;
-
-	if ((board_id == BOARD_ID_RZG2L_EVK) &&
-		!strcmp(name, "smarc-rzg2l"))
-		return 0;
-
-	if ((board_id == BOARD_ID_RZG2L_SBC) &&
-		!strcmp(name, "rzg2l-sbc"))
-		return 0;
-
-	return -EINVAL;
 }
 
 void s_init_rzv2h(void)
