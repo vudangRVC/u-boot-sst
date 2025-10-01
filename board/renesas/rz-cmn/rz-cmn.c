@@ -30,6 +30,7 @@
 #include <linux/delay.h>
 #include <linux/unaligned/be_byteshift.h>
 #include <spi_flash.h>
+#include <blk.h>
 #ifdef CONFIG_RENESAS_RZG2LWDT
 #include <wdt.h>
 #include <rzg2l_wdt.h>
@@ -37,6 +38,13 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+/* SYS */
+#define	RZV2H_SYS_BASE					(0x10430000)
+#define	RZV2H_SYS_LSI_MODE				(RZV2H_SYS_BASE + 0x00000300)
+
+#define RZV2H_MASK_BOOTM_DEVICE			(0x7)
+
+/* PFC */
 #define RZV2H_PFC_BASE			0x10410000
 #define RZV2H_PWPR			(RZV2H_PFC_BASE + 0x3C04)
 #define RZV2H_P_2A			(RZV2H_PFC_BASE + 0x002A)
@@ -98,6 +106,12 @@ DECLARE_GLOBAL_DATA_PTR;
 
 #define RZV2H_SYS_ADC_CFG				0x10431600
 
+/* SYS*/
+#define	RZG2L_SYS_BASE					(0x11020000)
+#define	RZG2L_SYS_LSI_MODE				(RZG2L_SYS_BASE + 0x00000A00)
+
+#define RZG2L_MASK_BOOTM_DEVICE			(0x0F)
+
 /* CPG */			
 #define RZG2L_CPG_BASE					0x11010000
 #define RZG2L_CPG_RESET_BASE			(RZG2L_CPG_BASE + 0x800)
@@ -147,11 +161,18 @@ DECLARE_GLOBAL_DATA_PTR;
 #define HcRhDescriptorA					0x048
 #define LPSTS							0x102
 #define MAX_SIZE_LEN					256
+#define BOARD_INFO_LOAD_ADDR			0x48000000
+#define BOARD_INFO_SIZE_BYTES			0x810
 
-/* QSPI */
-#define QSPI_BOARD_INFO_LOAD_ADDR		0x48000000
-#define QSPI_BOARD_INFO_OFFSET 			0x1C700
-#define QSPI_BOARD_INFO_OFFSET_V2H		0x120000
+/* xSPI */
+#define RZG2L_XSPI_BOARD_INFO_OFFSET 	0x1C700
+#define RZV2H_XSPI_BOARD_INFO_OFFSET	0x120000
+
+/* eMMC */
+#define EMMC_BOARD_INFO_DEV				0
+#define EMMC_BOARD_INFO_PART			1
+#define RZG2L_EMMC_BOARD_INFO_OFFSET	0xFA
+#define RZV2H_EMMC_BOARD_INFO_OFFSET	0x2FA
 
 extern u64 rcar_atf_boot_args[];
 extern u64 board_id;
@@ -191,53 +212,117 @@ typedef struct __attribute__((packed)) platform_desc {
 	uint8_t kernel_dtb_desc[MAX_SIZE_LEN];
 } platform_desc_t;
 
+typedef enum {
+	SYS_BOOT_MODE_ESD = 0,
+	SYS_BOOT_MODE_EMMC_1_8,
+	SYS_BOOT_MODE_EMMC_3_3,
+	SYS_BOOT_MODE_SPI_1_8,
+	SYS_BOOT_MODE_SPI_3_3,
+} boot_mode_t;
+
+boot_mode_t boot_modes[4][7] = {
+	/* 
+	 * RZG2L boot modes order (See "Overview" description in the Boot Mode section of the RZG2L hardware manual).
+	 *
+	 * | STAT_MD_BOOT[2:0] | Boot Mode      |
+	 * |-------------------|----------------|
+	 * | 000               | eSD            |
+	 * | 001               | eMMC 1.8V      |
+	 * | 010               | eMMC 3.3V      |
+	 * | 011               | SPI 1.8V       |
+	 * | 100               | SPI 3.3V       |
+	 */
+	[RZ_SOC_RZG2L] = {
+		[0] = SYS_BOOT_MODE_ESD,
+		[1] = SYS_BOOT_MODE_EMMC_1_8,
+		[2] = SYS_BOOT_MODE_EMMC_3_3,
+		[3] = SYS_BOOT_MODE_SPI_1_8,
+		[4] = SYS_BOOT_MODE_SPI_3_3,
+	},
+
+	/* 
+	 * RZV2L boot modes order (See "Overview" description in the Boot Mode section of the RZV2L hardware manual).
+	 *
+	 * | STAT_MD_BOOT[2:0] | Boot Mode      |
+	 * |-------------------|----------------|
+	 * | 000               | eSD            |
+	 * | 001               | eMMC 1.8V      |
+	 * | 010               | eMMC 3.3V      |
+	 * | 011               | SPI 1.8V       |
+	 * | 100               | SPI 3.3V       |
+	 */
+	[RZ_SOC_RZV2L] = {
+		[0] = SYS_BOOT_MODE_ESD,
+		[1] = SYS_BOOT_MODE_EMMC_1_8,
+		[2] = SYS_BOOT_MODE_EMMC_3_3,
+		[3] = SYS_BOOT_MODE_SPI_1_8,
+		[4] = SYS_BOOT_MODE_SPI_3_3,
+	},
+
+	/* 
+	 * RZV2H boot modes order (See "Boot Operation" description in the Overview section of the RZV2H hardware manual).
+	 *
+	 * | STAT_MD_BOOT[2:0] | Boot Mode      |
+	 * |-------------------|----------------|
+	 * | 000               | eSD            |
+	 * | 001               | eMMC 3.3V      |
+	 * | 101               | eMMC 1.8V      |
+	 * | 010               | SPI 3.3V       |
+	 * | 110               | SPI 1.8V       |
+	 */
+	[RZ_SOC_RZV2H] = {
+		[0] = SYS_BOOT_MODE_ESD,
+		[5] = SYS_BOOT_MODE_EMMC_1_8,
+		[1] = SYS_BOOT_MODE_EMMC_3_3,
+		[6] = SYS_BOOT_MODE_SPI_1_8,
+		[2] = SYS_BOOT_MODE_SPI_3_3,
+	},
+};
+
 /**
- * setup_uboot_info_from_qspi - Load board-specific U-Boot environment from QSPI
+ * sys_get_boot_mode - Resolve the boot mode for the active SoC instance
  *
- * This function probes the QSPI SPI flash, reads the platform descriptor
- * structure from a board-specific offset, and populates common U-Boot
- * environment variables such as board_id, mmcdev, mmcpart, boot arguments,
- * image address, and device tree addresses.
+ * Determine the boot medium by reading the SoC specific STAT_MD_BOOT bits
+ * and mapping them to the generic boot_mode_t enumeration.
  *
- * Data in the flash is stored in big-endian format; manual byte assembly is
- * currently used to extract 32-bit values.
+ * @return boot_mode_t value describing the detected boot medium.
+ */
+boot_mode_t sys_get_boot_mode(void)
+{
+	boot_mode_t boot_mode;
+	uint32_t stat_md_boot;
+
+	if (soc_id == RZ_SOC_RZG2L || soc_id == RZ_SOC_RZV2L) {
+		stat_md_boot = *(volatile uint32_t*)(RZG2L_SYS_LSI_MODE) &
+				RZG2L_MASK_BOOTM_DEVICE;
+	} else if (soc_id == RZ_SOC_RZV2H) {
+		stat_md_boot = *(volatile uint32_t*)(RZV2H_SYS_LSI_MODE) &
+				RZV2H_MASK_BOOTM_DEVICE;
+	} else {
+		printf("Runtime: unknown or unsupported soc_id = %llu\n", soc_id);
+		return boot_mode;
+	}
+
+	boot_mode = boot_modes[soc_id][stat_md_boot];
+
+	return boot_mode;
+}
+
+/**
+ * populate_env_from_board_info - Common populate U-Boot environment from board info
+ *
+ * @param[in] board_info Pointer to platform descriptor structure
+ * 
+ * Populate common U-Boot environment variables from the provided
+ * platform descriptor structure. This includes variables such as
+ * model_string, revision_minor, revision_major, mmcdev, mmcpart,
+ * mmc_args, image_addr, env_addr, dtb_addr, and dtbo_addr (if applicable).
  *
  */
-int setup_uboot_info_from_qspi(void)
+static void populate_env_from_board_info(const platform_desc_t *board_info)
 {
-	int ret = 0;
-	struct spi_flash *flash;
-	platform_desc_t *board_info = (platform_desc_t *)(uintptr_t)QSPI_BOARD_INFO_LOAD_ADDR;
 	char tmp_buf[256];
 	uint32_t tmp_val;
-
-	flash = spi_flash_probe(CONFIG_ENV_SPI_BUS, CONFIG_ENV_SPI_CS,
-				     CONFIG_ENV_SPI_MAX_HZ, CONFIG_ENV_SPI_MODE);
-	if (!flash) {
-		printf("Failed to probe SPI flash\n");
-		ret = -ENODEV;
-		goto cleanup;
-	}
-
-	switch (soc_id) {
-		case RZ_SOC_RZV2H:
-			ret = spi_flash_read(flash, QSPI_BOARD_INFO_OFFSET_V2H, CONFIG_ENV_SIZE, board_info);
-			break;
-		case RZ_SOC_RZG2L:
-		case RZ_SOC_RZV2L:
-			ret = spi_flash_read(flash, QSPI_BOARD_INFO_OFFSET, CONFIG_ENV_SIZE, board_info);
-			break;
-		default:
-			printf("Runtime: unknown or unsupported soc_id = %llu\n", soc_id);
-			ret = -EINVAL;
-			goto cleanup;
-	}
-
-	if (ret) {
-		printf("Failed to read SPI flash: %d\n", ret);
-		ret = -EIO;
-		goto cleanup;
-	}
 
 	/*
 	 * Common u-boot env variables section.
@@ -257,7 +342,9 @@ int setup_uboot_info_from_qspi(void)
 	snprintf(tmp_buf, sizeof(tmp_buf), "%u", board_info->u_boot_desc[1]);
 	env_set("mmcpart", tmp_buf);
 
-	snprintf(tmp_buf, sizeof(tmp_buf), "setenv bootargs rw rootwait earlycon root=/dev/mmcblk%up%u", board_info->u_boot_desc[2], board_info->u_boot_desc[3]);
+	snprintf(tmp_buf, sizeof(tmp_buf),
+		 "setenv bootargs rw rootwait earlycon root=/dev/mmcblk%up%u",
+		 board_info->u_boot_desc[2], board_info->u_boot_desc[3]);
 	env_set("mmc_args", tmp_buf);
 
 	/* Extract BE32 from u_boot_desc[4..7] for image_addr */
@@ -283,6 +370,131 @@ int setup_uboot_info_from_qspi(void)
 		snprintf(tmp_buf, sizeof(tmp_buf), "0x%08X", tmp_val);
 		env_set("dtbo_addr", tmp_buf);
 	}
+}
+
+/**
+ * setup_uboot_info_from_emmc - Load board-specific U-Boot environment from eMMC
+ *
+ * This function probes the eMMC, reads the platform descriptor structure
+ * from a board-specific offset, and populates common U-Boot environment.
+ *
+ */
+int setup_uboot_info_from_emmc(void)
+{
+	struct mmc *mmc;
+	struct blk_desc *desc;
+	platform_desc_t *board_info;
+	uchar *raw;
+	unsigned int block_len;
+	lbaint_t start_sector;
+	lbaint_t sector_count;
+	int ret;
+
+	unsigned int original_part;
+	int switched_part = 0;
+
+	mmc = find_mmc_device(EMMC_BOARD_INFO_DEV);
+	if (!mmc) {
+		printf("Failed to find eMMC device %d\n", EMMC_BOARD_INFO_DEV);
+		return -ENODEV;
+	}
+
+	ret = mmc_init(mmc);
+	if (ret) {
+		printf("Failed to init eMMC device %d (%d)\n",
+				EMMC_BOARD_INFO_DEV, ret);
+		return ret;
+	}
+
+	desc = mmc_get_blk_desc(mmc);
+	if (!desc) {
+		printf("Failed to get block descriptor for eMMC device %d\n",
+				EMMC_BOARD_INFO_DEV);
+		return -ENODEV;
+	}
+
+	original_part = desc->hwpart;
+	if (EMMC_BOARD_INFO_PART != desc->hwpart) {
+		ret = mmc_switch_part(mmc, EMMC_BOARD_INFO_PART);
+		if (ret) {
+			printf("Failed to switch eMMC device %d to part %u (%d)\n",
+					EMMC_BOARD_INFO_DEV, EMMC_BOARD_INFO_PART, ret);
+			return ret;
+		}
+		switched_part = 1;
+	}
+
+	block_len = desc->blksz;
+	start_sector = (soc_id == RZ_SOC_RZV2H) ?
+		RZV2H_EMMC_BOARD_INFO_OFFSET : RZG2L_EMMC_BOARD_INFO_OFFSET;
+	sector_count = (BOARD_INFO_SIZE_BYTES + block_len - 1) / block_len;
+
+	raw = (uchar *)(uintptr_t)BOARD_INFO_LOAD_ADDR;
+	if (blk_dread(desc, start_sector, sector_count, raw) != sector_count) {
+		printf("Failed to read board info from eMMC\n");
+		ret = -EIO;
+		goto cleanup;
+	}
+
+	board_info = (platform_desc_t *)raw;
+	populate_env_from_board_info(board_info);
+	ret = 0;
+
+cleanup:
+	if (switched_part)
+		mmc_switch_part(mmc, original_part);
+
+	return ret;
+}
+
+/**
+ * setup_uboot_info_from_qspi - Load board-specific U-Boot environment from QSPI
+ *
+ * This function probes the QSPI SPI flash, reads the platform descriptor
+ * structure from a board-specific offset, and populates common U-Boot
+ * environment variables such as board_id, mmcdev, mmcpart, boot arguments,
+ * image address, and device tree addresses.
+ *
+ * Data in the flash is stored in big-endian format; manual byte assembly is
+ * currently used to extract 32-bit values.
+ *
+ */
+int setup_uboot_info_from_qspi(void)
+{
+	int ret = 0;
+	struct spi_flash *flash;
+	platform_desc_t *board_info =
+		(platform_desc_t *)(uintptr_t)BOARD_INFO_LOAD_ADDR;
+
+	flash = spi_flash_probe(CONFIG_ENV_SPI_BUS, CONFIG_ENV_SPI_CS,
+				     CONFIG_ENV_SPI_MAX_HZ, CONFIG_ENV_SPI_MODE);
+	if (!flash) {
+		printf("Failed to probe SPI flash\n");
+		ret = -ENODEV;
+		goto cleanup;
+	}
+
+	switch (soc_id) {
+		case RZ_SOC_RZV2H:
+			ret = spi_flash_read(flash, RZV2H_XSPI_BOARD_INFO_OFFSET, CONFIG_ENV_SIZE, board_info);
+			break;
+		case RZ_SOC_RZG2L:
+		case RZ_SOC_RZV2L:
+			ret = spi_flash_read(flash, RZG2L_XSPI_BOARD_INFO_OFFSET, CONFIG_ENV_SIZE, board_info);
+			break;
+		default:
+			printf("Runtime: unknown or unsupported soc_id = %llu\n", soc_id);
+			ret = -EINVAL;
+			goto cleanup;
+	}
+
+	if (ret) {
+		printf("Failed to read SPI flash: %d\n", ret);
+		ret = -EIO;
+		goto cleanup;
+	}
+
+	populate_env_from_board_info(board_info);
 
 cleanup:
 	if (flash)
@@ -764,8 +976,22 @@ int board_late_init(void)
 #ifdef CONFIG_RENESAS_RZG2LWDT
 	rzg2l_reinitr_wdt();
 #endif
-	if (setup_uboot_info_from_qspi()) {
-		printf("Failed to initialize U-Boot env from QSPI");
+	boot_mode_t boot_mode = sys_get_boot_mode();
+
+	switch (boot_mode) {
+		case SYS_BOOT_MODE_SPI_1_8:
+		case SYS_BOOT_MODE_SPI_3_3:
+			setup_uboot_info_from_qspi();
+			break;
+		case SYS_BOOT_MODE_EMMC_1_8:
+		case SYS_BOOT_MODE_EMMC_3_3:
+			setup_uboot_info_from_emmc();
+			break;
+		case SYS_BOOT_MODE_ESD:
+			/* ESD is not supported */
+			break;
+	default:
+		break;
 	}
 
 	return 0;
