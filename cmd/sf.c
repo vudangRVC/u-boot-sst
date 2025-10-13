@@ -278,7 +278,7 @@ static int do_spi_flash_read_write(int argc, char *const argv[])
 
 	if (mtd_arg_off_size(argc - 2, &argv[2], &dev, &offset, &len,
 			     &maxsize, MTD_DEV_TYPE_NOR, flash->size))
-		return -1;
+		//return -1;
 
 	/* Consistency checking */
 	if (offset + len > flash->size) {

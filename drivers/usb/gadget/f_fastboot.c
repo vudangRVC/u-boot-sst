@@ -199,7 +199,7 @@ static void fastboot_complete(struct usb_ep *ep, struct usb_request *req)
 	int status = req->status;
 	if (!status)
 		return;
-	printf("status: %d ep '%s' trans: %d\n", status, ep->name, req->actual);
+	debug("status: %d ep '%s' trans: %d\n", status, ep->name, req->actual);
 }
 
 static int fastboot_bind(struct usb_configuration *c, struct usb_function *f)
@@ -427,7 +427,7 @@ static unsigned int rx_bytes_expected(struct usb_ep *ep)
 {
 	int rx_remain = fastboot_data_remaining();
 	unsigned int rem;
-	unsigned int maxpacket = usb_endpoint_maxp(ep->desc);
+	unsigned int maxpacket = ep->maxpacket;
 
 	if (rx_remain <= 0)
 		return 0;
@@ -455,7 +455,7 @@ static void rx_handler_dl_image(struct usb_ep *ep, struct usb_request *req)
 	unsigned int buffer_size = req->actual;
 
 	if (req->status != 0) {
-		printf("Bad status: %d\n", req->status);
+		debug("Bad status: %d\n", req->status);
 		return;
 	}
 

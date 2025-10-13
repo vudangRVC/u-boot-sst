@@ -33,6 +33,8 @@
 #include <clk.h>
 
 #define DRIVER_NAME "sh-sdhi"
+#define SDHI_WRITE_TIMEOUT	100000
+#define SDHI_INTERRUPT_TIMEOUT	10000000
 
 extern u64 soc_id;
 
@@ -163,7 +165,7 @@ static int sh_sdhi_intr(void *dev_id)
 
 static int sh_sdhi_wait_interrupt_flag(struct sh_sdhi_host *host)
 {
-	int timeout = 10000000;
+	int timeout = SDHI_INTERRUPT_TIMEOUT;
 
 	while (1) {
 		timeout--;
@@ -203,7 +205,7 @@ static int sh_sdhi_clock_control(struct sh_sdhi_host *host, unsigned long clk)
 
 	sh_sdhi_writew(host, SDHI_CLK_CTRL, clkdiv);
 
-	timeout = 100000;
+	timeout = SDHI_WRITE_TIMEOUT;
 	/* Waiting for SD Bus busy to be cleared */
 	while (timeout--) {
 		if ((sh_sdhi_readw(host, SDHI_INFO2) & 0x2000))
@@ -227,7 +229,7 @@ static int sh_sdhi_sync_reset(struct sh_sdhi_host *host)
 	sh_sdhi_writew(host, SDHI_CLK_CTRL,
 		       CLK_ENABLE | sh_sdhi_readw(host, SDHI_CLK_CTRL));
 
-	timeout = 100000;
+	timeout = SDHI_WRITE_TIMEOUT;
 	while (timeout--) {
 		if (!(sh_sdhi_readw(host, SDHI_INFO2) & INFO2_CBUSY))
 			break;
@@ -590,12 +592,15 @@ static int sh_sdhi_start_cmd(struct sh_sdhi_host *host,
 	sh_sdhi_writew(host, SDHI_ARG1,
 		       (unsigned short)((cmd->cmdarg >> 16) & ARG1_MASK));
 
-	timeout = 100000;
+	timeout = SDHI_WRITE_TIMEOUT;
 	/* Waiting for SD Bus busy to be cleared */
 	while (timeout--) {
 		if ((sh_sdhi_readw(host, SDHI_INFO2) & 0x2000))
 			break;
 	}
+
+	sh_sdhi_writew(host, SDHI_INFO1, 0);  // Clear INFO1 full
+	sh_sdhi_writew(host, SDHI_INFO2, 0);  // Clear INFO2 full
 
 	host->wait_int = 0;
 	sh_sdhi_writew(host, SDHI_INFO1_MASK,
@@ -607,6 +612,16 @@ static int sh_sdhi_start_cmd(struct sh_sdhi_host *host,
 		       sh_sdhi_readw(host, SDHI_INFO2_MASK));
 
 	sh_sdhi_writew(host, SDHI_CMD, (unsigned short)(shcmd & CMD_MASK));
+
+	timeout = SDHI_WRITE_TIMEOUT;
+	while (timeout--) {
+		if (sh_sdhi_readw(host, SDHI_INFO1) & INFO1_RESP_END)
+			break;
+		udelay(1);  // Delay 1us
+	}
+
+	if (!timeout) return -ETIMEDOUT;
+
 	time = sh_sdhi_wait_interrupt_flag(host);
 	if (!time) {
 		host->app_cmd = 0;
@@ -649,6 +664,13 @@ static int sh_sdhi_start_cmd(struct sh_sdhi_host *host,
 	debug("ret = %d, resp = %08x, %08x, %08x, %08x\n",
 	      ret, cmd->response[0], cmd->response[1],
 	      cmd->response[2], cmd->response[3]);
+
+	timeout = SDHI_WRITE_TIMEOUT;
+	while (timeout--) {
+		if (sh_sdhi_readw(host, SDHI_INFO2) & 0x2000)
+			break;
+	}
+
 	return ret;
 }
 
@@ -873,19 +895,24 @@ static int sh_sdhi_dm_probe(struct udevice *dev)
 	plat->cfg.name = dev->name;
 	plat->cfg.host_caps = MMC_MODE_HS_52MHz | MMC_MODE_HS;
 
-	switch (fdtdec_get_int(gd->fdt_blob, dev_of_offset(dev), "bus-width",
-			       1)) {
-	case 8:
-		plat->cfg.host_caps |= MMC_MODE_8BIT;
-		break;
-	case 4:
-		plat->cfg.host_caps |= MMC_MODE_4BIT;
-		break;
-	case 1:
-		break;
-	default:
-		dev_err(dev, "Invalid \"bus-width\" value\n");
-		return -EINVAL;
+	if (fdtdec_get_bool(gd->fdt_blob, dev_of_offset(dev),
+				"mutual-channel")) {
+		plat->cfg.host_caps |= MMC_MODE_4BIT | MMC_MODE_8BIT;
+	} else {
+		switch (fdtdec_get_int(gd->fdt_blob, dev_of_offset(dev),
+					"bus-width", 1)) {
+		case 8:
+			plat->cfg.host_caps |= MMC_MODE_8BIT;
+			break;
+		case 4:
+			plat->cfg.host_caps |= MMC_MODE_4BIT;
+			break;
+		case 1:
+			break;
+		default:
+			dev_err(dev, "Invalid \"bus-width\" value\n");
+			return -EINVAL;
+		}
 	}
 
 	sh_sdhi_initialize_common(host);
