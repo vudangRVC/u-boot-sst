@@ -163,11 +163,13 @@ DECLARE_GLOBAL_DATA_PTR;
 #define RZG2L_XSPI_BOARD_INFO_OFFSET 	0x1C700
 #define RZV2H_XSPI_BOARD_INFO_OFFSET	0x5F300
 
-/* eMMC */
+/* Multi-Media Card interface (eMMC/eSD) */
 #define EMMC_BOARD_INFO_DEV				0
 #define EMMC_BOARD_INFO_PART			1
-#define RZG2L_EMMC_BOARD_INFO_OFFSET	0xFA
-#define RZV2H_EMMC_BOARD_INFO_OFFSET	0x2FA
+#define ESD_BOARD_INFO_DEV				0
+#define ESD_BOARD_INFO_PART				0
+#define RZG2L_MMC_BOARD_INFO_OFFSET		0xFA
+#define RZV2H_MMC_BOARD_INFO_OFFSET		0x2FA
 
 extern u64 rcar_atf_boot_args[];
 extern u64 board_id;
@@ -365,13 +367,13 @@ static void populate_env_from_board_info(const platform_desc_t *board_info)
 }
 
 /**
- * setup_uboot_info_from_emmc - Load board-specific U-Boot environment from eMMC
+ * setup_uboot_info_from_mmc - Load board-specific U-Boot environment from Multi-Media Card (MMC) interface
  *
- * This function probes the eMMC, reads the platform descriptor structure
+ * This function probes the eMMC/eSD, reads the platform descriptor structure
  * from a board-specific offset, and populates common U-Boot environment.
  *
  */
-int setup_uboot_info_from_emmc(void)
+int setup_uboot_info_from_mmc(uint32_t mmc_dev, uint32_t mmc_part)
 {
 	struct mmc *mmc;
 	struct blk_desc *desc;
@@ -385,32 +387,32 @@ int setup_uboot_info_from_emmc(void)
 	unsigned int original_part;
 	int switched_part = 0;
 
-	mmc = find_mmc_device(EMMC_BOARD_INFO_DEV);
+	mmc = find_mmc_device(mmc_dev);
 	if (!mmc) {
-		printf("Failed to find eMMC device %d\n", EMMC_BOARD_INFO_DEV);
+		printf("Failed to find MMC device %d\n", mmc_dev);
 		return -ENODEV;
 	}
 
 	ret = mmc_init(mmc);
 	if (ret) {
-		printf("Failed to init eMMC device %d (%d)\n",
-				EMMC_BOARD_INFO_DEV, ret);
+		printf("Failed to init MMC device %d (%d)\n",
+				mmc_dev, ret);
 		return ret;
 	}
 
 	desc = mmc_get_blk_desc(mmc);
 	if (!desc) {
-		printf("Failed to get block descriptor for eMMC device %d\n",
-				EMMC_BOARD_INFO_DEV);
+		printf("Failed to get block descriptor for MMC device %d\n",
+				mmc_dev);
 		return -ENODEV;
 	}
 
 	original_part = desc->hwpart;
-	if (EMMC_BOARD_INFO_PART != desc->hwpart) {
-		ret = mmc_switch_part(mmc, EMMC_BOARD_INFO_PART);
+	if (mmc_part != desc->hwpart) {
+		ret = mmc_switch_part(mmc, mmc_part);
 		if (ret) {
-			printf("Failed to switch eMMC device %d to part %u (%d)\n",
-					EMMC_BOARD_INFO_DEV, EMMC_BOARD_INFO_PART, ret);
+			printf("Failed to switch MMC device %d to part %u (%d)\n",
+					mmc_dev, mmc_part, ret);
 			return ret;
 		}
 		switched_part = 1;
@@ -418,12 +420,12 @@ int setup_uboot_info_from_emmc(void)
 
 	block_len = desc->blksz;
 	start_sector = (soc_id == RZ_SOC_RZV2H) ?
-		RZV2H_EMMC_BOARD_INFO_OFFSET : RZG2L_EMMC_BOARD_INFO_OFFSET;
+		RZV2H_MMC_BOARD_INFO_OFFSET : RZG2L_MMC_BOARD_INFO_OFFSET;
 	sector_count = (BOARD_INFO_SIZE_BYTES + block_len - 1) / block_len;
 
 	raw = (uchar *)(uintptr_t)BOARD_INFO_LOAD_ADDR;
 	if (blk_dread(desc, start_sector, sector_count, raw) != sector_count) {
-		printf("Failed to read board info from eMMC\n");
+		printf("Failed to read board info from MMC\n");
 		ret = -EIO;
 		goto cleanup;
 	}
@@ -977,10 +979,10 @@ int board_late_init(void)
 			break;
 		case SYS_BOOT_MODE_EMMC_1_8:
 		case SYS_BOOT_MODE_EMMC_3_3:
-			setup_uboot_info_from_emmc();
+			setup_uboot_info_from_mmc(EMMC_BOARD_INFO_DEV, EMMC_BOARD_INFO_PART);
 			break;
 		case SYS_BOOT_MODE_ESD:
-			/* ESD is not supported */
+			setup_uboot_info_from_mmc(ESD_BOARD_INFO_DEV, ESD_BOARD_INFO_PART);
 			break;
 	default:
 		break;
