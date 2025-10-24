@@ -45,35 +45,38 @@
 		"test \"${revision_minor}\" = \"" min "\"; then " \
 		"setenv fdtfile " dtb "; "
 
-#define RZ_FDT_SELECT_BEGIN "if false; then :; "
+#define RZ_FDT_SELECT_BEGIN "if false; then ; "
 #define RZ_FDT_SELECT_END   "else echo WARN: unknown board ${model_string}-${revision_major}.${revision_minor}; fi; "
 
 /* Built-in DTB table — add more boards here */
 #ifndef RZ_FDT_SELECT_TABLE
 #define RZ_FDT_SELECT_TABLE \
-	RZ_FDT_CASE("rzg2l-sbc", "1", "0", "rzg2l-sbc.dtb") 			\
-	RZ_FDT_CASE("rzg2l-evk", "1", "0", "r9a07g044l2-smarc.dtb") 	\
-	RZ_FDT_CASE("rzv2l-evk", "1", "0", "r9a07g054l2-smarc.dtb") 	\
-	RZ_FDT_CASE("rzv2h-evk", "1", "0", "r9a09g057h4-evk-ver1.dtb") 	\
-	RZ_FDT_CASE("rzv2h-evk", "2", "0", "r9a09g057h4-evk-ver1.dtb") 	\
-	RZ_FDT_CASE("rzv2h-rdk", "1", "0", "r9a09g057h4-rdk-ver1.dtb")
+	RZ_FDT_CASE("rzg2l-sbc", "1", "0", "rzg2l-sbc.dtb") \
+	RZ_FDT_CASE("rzg2l-evk", "1", "0", "rzg2l-evk.dtb") \
+	RZ_FDT_CASE("rzv2l-evk", "1", "0", "rzv2l-evk.dtb") \
+	RZ_FDT_CASE("rzv2h-evk", "1", "0", "rzv2h-evk-ver1.dtb") \
+	RZ_FDT_CASE("rzv2h-evk", "2", "0", "rzv2h-evk-ver1.dtb") \
+	RZ_FDT_CASE("rzv2h-rdk", "1", "0", "rzv2h-rdk-ver1.dtb")
 #endif
 
 /* Built-in overlay flags — add more overlays here */
 #ifndef RZ_OVERLAY_FLAGS_TABLE
 #define RZ_OVERLAY_FLAGS_TABLE \
-	RZ_OVERLAY_IF_FLAG("enable_overlay_i2c",        "rzg2l-sbc-ext-i2c.dtbo") \
-	RZ_OVERLAY_IF_FLAG("enable_overlay_spi",        "rzg2l-sbc-ext-spi.dtbo") \
-	RZ_OVERLAY_IF_FLAG("enable_overlay_can",        "rzg2l-sbc-can.dtbo") \
-	RZ_OVERLAY_IF_FLAG("enable_overlay_dsi",        "rzg2l-sbc-dsi.dtbo") \
-	RZ_OVERLAY_IF_FLAG("enable_overlay_csi_ov5640", "rzg2l-sbc-ov5640.dtbo")
+	RZ_OVERLAY_IF_FLAG("enable_overlay_i2c",          "${model_string}-${revision_major}.${revision_minor}-ext-i2c.dtbo") \
+	RZ_OVERLAY_IF_FLAG("enable_overlay_spi",          "${model_string}-${revision_major}.${revision_minor}-ext-spi.dtbo") \
+	RZ_OVERLAY_IF_FLAG("enable_overlay_can",          "${model_string}-${revision_major}.${revision_minor}-can.dtbo") \
+	RZ_OVERLAY_IF_FLAG("enable_overlay_dsi",          "${model_string}-${revision_major}.${revision_minor}-dsi.dtbo") \
+	RZ_OVERLAY_IF_FLAG("enable_overlay_audio_codec",  "${model_string}-${revision_major}.${revision_minor}-audio_codec.dtbo") \
+	RZ_OVERLAY_IF_FLAG("enable_overlay_audio_hdmi",   "${model_string}-${revision_major}.${revision_minor}-audio_hdmi.dtbo") \
+	RZ_OVERLAY_IF_FLAG("enable_overlay_csi_ov5640",   "${model_string}-${revision_major}.${revision_minor}-ov5640.dtbo") \
+	RZ_OVERLAY_IF_FLAG("enable_overlay_csi_ov5645",   "${model_string}-${revision_major}.${revision_minor}-cru-csi-ov5645.dtbo")
 #endif
 
 #define RZ_ENV_DEFAULTS \
 	"overlaydir=dtb/renesas/overlays\0" \
 	"fdt_select=" \
 		"if env exists fdtfile && test -n ${fdtfile}; then " \
-			":; " \
+			"; " \
 		"else " \
 			RZ_FDT_SELECT_BEGIN \
 			RZ_FDT_SELECT_TABLE \
