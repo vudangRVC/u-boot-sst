@@ -359,12 +359,9 @@ static void populate_env_from_board_info(const platform_desc_t *board_info)
 	snprintf(tmp_buf, sizeof(tmp_buf), "0x%08X", tmp_val);
 	env_set("dtb_addr", tmp_buf);
 
-	/* Only rzg2l-sbc has dtb overlays */
-	if (BOARD_ID_RZG2L_SBC == board_id) {
-		tmp_val = get_unaligned_be32(&board_info->u_boot_dtb_desc[4]);
-		snprintf(tmp_buf, sizeof(tmp_buf), "0x%08X", tmp_val);
-		env_set("dtbo_addr", tmp_buf);
-	}
+	tmp_val = get_unaligned_be32(&board_info->u_boot_dtb_desc[4]);
+	snprintf(tmp_buf, sizeof(tmp_buf), "0x%08X", tmp_val);
+	env_set("dtbo_addr", tmp_buf);
 }
 
 /**
