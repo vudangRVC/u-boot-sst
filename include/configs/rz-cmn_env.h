@@ -73,8 +73,32 @@
 	RZ_OVERLAY_IF_FLAG("enable_overlay_csi_ov5645",   "${model_string}-${revision_major}.${revision_minor}-cru-csi-ov5645.dtbo")
 #endif
 
+/* Image selection cases */
+#define RZ_IMAGE_SELECT_BEGIN \
+        "if test -z \"${image_flavor}\" || test \"${image_flavor}\" = \"normal\"; then " \
+                "setenv kernel_image Image; "
+
+#define RZ_IMAGE_SELECT_END \
+        "else " \
+                "echo WARN: unknown image_flavor=${image_flavor}, fallback to normal; " \
+                "setenv image_flavor normal; " \
+                "setenv kernel_image Image; " \
+        "fi; \0"
+
+#define RZ_IMAGE_CASE(image_flavor, kernel_image) \
+	"elif test \"${image_flavor}\" = \"" image_flavor "\"; then " \
+		"setenv kernel_image " kernel_image "; "
+
+#define RZ_IMAGE_SELECT_TABLE \
+	RZ_IMAGE_CASE("preempt_rt", "Image-preempt_rt") \
+	RZ_IMAGE_CASE("nonpreempt", "Image-nonpreempt")
+
 #define RZ_ENV_DEFAULTS \
 	"overlaydir=dtb/renesas/overlays\0" \
+	"image_select=" \
+		RZ_IMAGE_SELECT_BEGIN \
+		RZ_IMAGE_SELECT_TABLE \
+		RZ_IMAGE_SELECT_END \
 	"fdt_select=" \
 		"if env exists fdtfile && test -n ${fdtfile}; then " \
 			"; " \
@@ -92,8 +116,8 @@
 			RZ_OVERLAY_APPLY_LIST \
 			"if env exists overlay_user_cases; then run overlay_user_cases; fi; " \
 		"else echo WARN: Cannot load base DT; fi; \0" \
-	"mmc_do_boot=run mmc_args; " \
-		"fatload mmc ${mmcdev}:${mmcpart} ${image_addr} Image; " \
+	"mmc_do_boot=run mmc_args; run image_select; " \
+		"fatload mmc ${mmcdev}:${mmcpart} ${image_addr} ${kernel_image}; " \
 		"run fdt_ovrun; " \
 		"booti ${image_addr} - ${dtb_addr}\0"
 
