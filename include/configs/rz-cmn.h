@@ -84,7 +84,7 @@
 /* ENV setting */
 #define CFG_EXTRA_ENV_SETTINGS \
 	"bootenvfile=uEnv.txt\0" \
-	"image=Image \0" \
+	"image_flavor=normal \0" \
 	"importbootenv=echo Importing environment from mmc${mmcdev} ...; " \
 		"env import -t ${env_addr} ${filesize}\0" \
 	"loadbootenv=fatload mmc ${mmcdev}:${mmcpart} ${env_addr} ${bootenvfile}\0" \
