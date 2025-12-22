@@ -7,7 +7,7 @@ config SYS_BOARD
 	default "rzpi"
 
 config SYS_VENDOR
-	default "novtech"
+	default "renesas"
 
 config SYS_CONFIG_NAME
 	default "rzpi"
