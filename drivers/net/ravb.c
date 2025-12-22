@@ -129,6 +129,7 @@ struct ravb_priv {
 	struct phy_device	*phydev;
 	struct mii_dev		*bus;
 	void __iomem		*iobase;
+	void __iomem            *mdiobase;
 	struct clk_bulk		clks;
 };
 
@@ -496,10 +497,32 @@ static int ravb_probe(struct udevice *dev)
 	struct ravb_priv *eth = dev_get_priv(dev);
 	struct mii_dev *mdiodev;
 	void __iomem *iobase;
+	u32 alt_mdiobase, phy_index;
 	int ret;
 
 	iobase = map_physmem(pdata->iobase, 0x1000, MAP_NOCACHE);
 	eth->iobase = iobase;
+
+		ret = dev_read_u32(dev, "alt-mdio-base", &alt_mdiobase);
+	if (ret) {
+		eth->mdiobase = iobase;
+	} else {
+		eth->mdiobase = map_physmem((phys_addr_t )alt_mdiobase, 0x1000, MAP_NOCACHE);
+		if (!eth->mdiobase) {
+			printf("Warning: Unable to map alternate MDIO space\n");
+			eth->iobase = eth->mdiobase;
+		}
+	}
+
+	ret = dev_read_u32(dev, "phy-index", &phy_index);
+	if (ret) {
+		phy_index = 0;
+	} else {
+		if (phy_index >= bb_miiphy_buses_num) {
+			printf("Invalid phy-index\n");
+			goto err_mdio_alloc;
+		}
+	}
 
 	ret = clk_get_bulk(dev, &eth->clks);
 	if (ret < 0)
@@ -513,7 +536,7 @@ static int ravb_probe(struct udevice *dev)
 
 	mdiodev->read = bb_miiphy_read;
 	mdiodev->write = bb_miiphy_write;
-	bb_miiphy_buses[0].priv = eth;
+	bb_miiphy_buses[phy_index].priv = eth;
 	snprintf(mdiodev->name, sizeof(mdiodev->name), dev->name);
 
 	ret = mdio_register(mdiodev);
@@ -543,6 +566,9 @@ err_mdio_register:
 	mdio_free(mdiodev);
 err_mdio_alloc:
 	unmap_physmem(eth->iobase, MAP_NOCACHE);
+	if (eth->iobase != eth->mdiobase) {
+		unmap_physmem(eth->mdiobase, MAP_NOCACHE);
+	}
 	return ret;
 }
 
@@ -556,6 +582,9 @@ static int ravb_remove(struct udevice *dev)
 	mdio_unregister(eth->bus);
 	mdio_free(eth->bus);
 	unmap_physmem(eth->iobase, MAP_NOCACHE);
+	if (eth->iobase != eth->mdiobase) {
+		unmap_physmem(eth->mdiobase, MAP_NOCACHE);
+	}
 
 	return 0;
 }
@@ -569,7 +598,9 @@ int ravb_bb_mdio_active(struct bb_miiphy_bus *bus)
 {
 	struct ravb_priv *eth = bus->priv;
 
-	setbits_le32(eth->iobase + RAVB_REG_PIR, PIR_MMD);
+	if (eth) {
+		setbits_le32(eth->mdiobase + RAVB_REG_PIR, PIR_MMD);
+	}
 
 	return 0;
 }
@@ -578,7 +609,9 @@ int ravb_bb_mdio_tristate(struct bb_miiphy_bus *bus)
 {
 	struct ravb_priv *eth = bus->priv;
 
-	clrbits_le32(eth->iobase + RAVB_REG_PIR, PIR_MMD);
+	if (eth) {
+		clrbits_le32(eth->mdiobase + RAVB_REG_PIR, PIR_MMD);
+	}
 
 	return 0;
 }
@@ -587,10 +620,12 @@ int ravb_bb_set_mdio(struct bb_miiphy_bus *bus, int v)
 {
 	struct ravb_priv *eth = bus->priv;
 
-	if (v)
-		setbits_le32(eth->iobase + RAVB_REG_PIR, PIR_MDO);
-	else
-		clrbits_le32(eth->iobase + RAVB_REG_PIR, PIR_MDO);
+	if (eth) {
+		if (v)
+			setbits_le32(eth->mdiobase + RAVB_REG_PIR, PIR_MDO);
+		else
+			clrbits_le32(eth->mdiobase + RAVB_REG_PIR, PIR_MDO);
+	}
 
 	return 0;
 }
@@ -599,7 +634,11 @@ int ravb_bb_get_mdio(struct bb_miiphy_bus *bus, int *v)
 {
 	struct ravb_priv *eth = bus->priv;
 
-	*v = (readl(eth->iobase + RAVB_REG_PIR) & PIR_MDI) >> 3;
+	if (eth) {
+		*v = (readl(eth->mdiobase + RAVB_REG_PIR) & PIR_MDI) >> 3;
+	} else {
+		*v = 0;
+	}
 
 	return 0;
 }
@@ -608,10 +647,12 @@ int ravb_bb_set_mdc(struct bb_miiphy_bus *bus, int v)
 {
 	struct ravb_priv *eth = bus->priv;
 
-	if (v)
-		setbits_le32(eth->iobase + RAVB_REG_PIR, PIR_MDC);
-	else
-		clrbits_le32(eth->iobase + RAVB_REG_PIR, PIR_MDC);
+	if (eth) {
+		if (v)
+			setbits_le32(eth->mdiobase + RAVB_REG_PIR, PIR_MDC);
+		else
+			clrbits_le32(eth->mdiobase + RAVB_REG_PIR, PIR_MDC);
+	}
 
 	return 0;
 }
@@ -625,7 +666,7 @@ int ravb_bb_delay(struct bb_miiphy_bus *bus)
 
 struct bb_miiphy_bus bb_miiphy_buses[] = {
 	{
-		.name		= "ravb",
+		.name		= "ravb0",
 		.init		= ravb_bb_init,
 		.mdio_active	= ravb_bb_mdio_active,
 		.mdio_tristate	= ravb_bb_mdio_tristate,
@@ -633,6 +674,17 @@ struct bb_miiphy_bus bb_miiphy_buses[] = {
 		.get_mdio	= ravb_bb_get_mdio,
 		.set_mdc	= ravb_bb_set_mdc,
 		.delay		= ravb_bb_delay,
+	},
+
+	{
+		.name           = "ravb1",
+		.init           = ravb_bb_init,
+		.mdio_active    = ravb_bb_mdio_active,
+		.mdio_tristate  = ravb_bb_mdio_tristate,
+		.set_mdio       = ravb_bb_set_mdio,
+		.get_mdio       = ravb_bb_get_mdio,
+		.set_mdc        = ravb_bb_set_mdc,
+		.delay          = ravb_bb_delay,
 	},
 };
 int bb_miiphy_buses_num = ARRAY_SIZE(bb_miiphy_buses);
@@ -650,6 +702,7 @@ int ravb_of_to_plat(struct udevice *dev)
 {
 	struct eth_pdata *pdata = dev_get_plat(dev);
 	const fdt32_t *cell;
+	u32 phy_index = 0;
 
 	pdata->iobase = dev_read_addr(dev);
 
@@ -662,7 +715,15 @@ int ravb_of_to_plat(struct udevice *dev)
 	if (cell)
 		pdata->max_speed = fdt32_to_cpu(*cell);
 
-	sprintf(bb_miiphy_buses[0].name, dev->name);
+	cell = fdt_getprop(gd->fdt_blob, dev_of_offset(dev), "phy-index", NULL);
+	if (cell) {
+		phy_index = fdt32_to_cpu(*cell);
+		if (phy_index >= bb_miiphy_buses_num) {
+			return -EINVAL;
+		}
+	}	
+
+	sprintf(bb_miiphy_buses[phy_index].name, dev->name);
 
 	return 0;
 }
