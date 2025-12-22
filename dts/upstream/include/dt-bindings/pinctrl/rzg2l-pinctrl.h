@@ -17,6 +17,13 @@
  */
 #define RZG2L_PORT_PINMUX(b, p, f)	((b) * RZG2L_PINS_PER_PORT + (p) | ((f) << 16))
 
+/*
+ * Store the pin index from its port and position number in bits[11-0].
+ * And store its peripheral function mode identifier in 3 bits [14-12]
+ */
+#define RZG2L_PINMUX(port, pos, func)	\
+	(((port) * RZG2L_PINS_PER_PORT + (pos)) | ((func) << 12))
+
 /* Convert a port and pin label to its global pin index */
 #define RZG2L_GPIO(port, pin)	((port) * RZG2L_PINS_PER_PORT + (pin))
 
