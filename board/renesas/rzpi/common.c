@@ -7,11 +7,11 @@
  * Copyright (C) 2015 Nobuhiro Iwamatsu <iwamatsu@nigauri.org>
  */
 
-#include <common.h>
+// #include <common.h>
 #include <dm.h>
 #include <init.h>
 #include <dm/uclass-internal.h>
-#include <asm/arch/rmobile.h>
+#include <asm/arch/renesas.h>
 #include <linux/libfdt.h>
 
 #ifdef CONFIG_RCAR_GEN3

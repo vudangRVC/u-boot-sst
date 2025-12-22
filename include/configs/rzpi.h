@@ -6,7 +6,7 @@
 #ifndef __RZPI_H
 #define __RZPI_H
 
-#include <asm/arch/rmobile.h>
+#include <asm/arch/renesas.h>
 
 //Set the correct memory of the board
 #define ISSI_4Gb_DDR 0
@@ -41,15 +41,15 @@
 
 /* Generic Interrupt Controller Definitions */
 /* RZ/G2L use GIC-v3 */
-#define CONFIG_GICV3
+// #define CONFIG_GICV3
 #define GICD_BASE	0x11900000
 #define GICR_BASE	0x11960000
 
 /* console */
-#define CONFIG_SYS_CBSIZE		2048
-#define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
-#define CONFIG_SYS_MAXARGS		64
-#define CONFIG_SYS_BAUDRATE_TABLE	{ 115200, 38400 }
+// #define CONFIG_SYS_CBSIZE		2048
+// #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
+// #define CONFIG_SYS_MAXARGS		64
+// #define CONFIG_SYS_BAUDRATE_TABLE	{ 115200, 38400 }
 
 /* PHY needs a longer autoneg timeout */
 #define PHY_ANEG_TIMEOUT		20000
@@ -68,10 +68,10 @@
 #define CONFIG_VERY_BIG_RAM
 #define CONFIG_MAX_MEM_MAPPED		(0x80000000u - DRAM_RSV_SIZE)
 
-#define CONFIG_SYS_MONITOR_BASE		0x00000000
-#define CONFIG_SYS_MONITOR_LEN		(1 * 1024 * 1024)
-#define CONFIG_SYS_MALLOC_LEN		(64 * 1024 * 1024)
-#define CONFIG_SYS_BOOTM_LEN		(64 << 20)
+// #define CONFIG_SYS_MONITOR_BASE		0x00000000
+// #define CONFIG_SYS_MONITOR_LEN		(1 * 1024 * 1024)
+// #define CONFIG_SYS_MALLOC_LEN		(64 * 1024 * 1024)
+// #define CONFIG_SYS_BOOTM_LEN		(64 << 20)
 
 /* The HF/QSPI layout permits up to 1 MiB large bootloader blob */
 #define CONFIG_BOARD_SIZE_LIMIT		1048576

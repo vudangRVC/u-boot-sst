@@ -1,4 +1,4 @@
-#include <common.h>
+// #include <common.h>
 #include <cpu_func.h>
 #include <image.h>
 #include <init.h>
@@ -14,7 +14,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/gpio.h>
 #include <asm/arch/gpio.h>
-#include <asm/arch/rmobile.h>
+#include <asm/arch/renesas.h>
 #include <asm/arch/rcar-mstp.h>
 #include <asm/arch/sh_sdhi.h>
 #include <miiphy.h>
@@ -85,13 +85,19 @@ int board_mmc_init(struct bd_info *bis)
 int board_init(void)
 {
 	/* adress of boot parameters */
-	gd->bd->bi_boot_params = CONFIG_SYS_TEXT_BASE + 0x50000;
+	gd->bd->bi_boot_params = CONFIG_TEXT_BASE + 0x50000;
 
 	return 0;
 }
 
 void reset_cpu(void)
 {
+}
+
+
+int ft_board_setup(void *blob, struct bd_info *bd)
+{
+	return 0;
 }
 
 static void configure_gpy111_phys(void)
