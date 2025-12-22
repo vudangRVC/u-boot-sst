@@ -19,9 +19,15 @@ config TARGET_RZG2L_SMARC_EVK
 	help
 	  Enable support for the RZ/G2L SMARC evaluation board.
 
-source "board/renesas/rzg2l/Kconfig"
+config TARGET_RZPI
+	bool "NovTech RZpi board"
+	help
+	  Support for NovTech's Raspberry-Pi-like board
 
 endchoice
+
+source "board/renesas/rzg2l/Kconfig"
+source "board/novtech/rzpi/Kconfig"
 
 config MULTI_DTB_FIT_UNCOMPRESS_SZ
 	default 0x80000 if TARGET_RZG2L_SMARC_EVK
