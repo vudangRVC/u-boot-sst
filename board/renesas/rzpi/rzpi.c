@@ -70,7 +70,7 @@ void s_init(void)
 
 int board_early_init_f(void)
 {
-
+	s_init();
 	return 0;
 }
 
