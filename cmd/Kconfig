@@ -22,6 +22,14 @@ config HUSH_PARSER
 	  If disabled, you get the old, much simpler behaviour with a somewhat
 	  smaller memory footprint.
 
+menu "Renesas specific commands"
+config CMD_CM33
+	bool "RZ/G2L CM33 commands"
+	help
+	  Commands used to enable and control the embedded CM33 in the RZ/G2L, RZ/V2L and RZ/V2H MPUs.
+
+endmenu
+
 menu "Hush flavor to use"
 depends on HUSH_PARSER
 
