@@ -22,7 +22,7 @@
 #include <mmc.h>
 #include <command.h>
 
-#if !defined(CONFIG_TARGET_RZPI)
+#if !defined(CONFIG_TARGET_RZG2L_SBC)
 #  error This platform support file is for the RZG2L-SBC board (Raspberry-Pi-like board).
 #endif
 

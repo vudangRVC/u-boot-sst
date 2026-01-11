@@ -1,16 +1,16 @@
-if TARGET_RZPI
+if TARGET_RZG2L_SBC
 
 config SYS_SOC
-	default "rmobile"
+	default "renesas"
 
 config SYS_BOARD
-	default "rzpi"
+	default "rzg2l-sbc"
 
 config SYS_VENDOR
 	default "renesas"
 
 config SYS_CONFIG_NAME
-	default "rzpi"
+	default "rzg2l-sbc"
 
 config BOARD_SPECIFIC_OPTIONS
         def_bool y
