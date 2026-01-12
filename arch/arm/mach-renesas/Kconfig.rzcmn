@@ -1,0 +1,31 @@
+# Copyright (C) 2023 Renesas Electronics Corporation
+# SPDX-License-Identifier: GPL-2.0+
+
+if RZ_CMN
+
+config R9A07Gx
+	bool "Renesas CLK_RZ_CMN SoC"
+	imply CLK_RZ_CMN
+	help
+	  Enable support for the Renesas Common SoC.
+
+choice
+	prompt "Renesas RZ/G2L Family Board selection"
+
+config TARGET_RZ_CMN
+	bool "Renesas Common"
+	imply R9A07Gx
+	help
+	  Enable support for the RZ/G2L SMARC evaluation board.
+
+endchoice
+
+source "board/renesas/rz-cmn/Kconfig"
+
+config MULTI_DTB_FIT_UNCOMPRESS_SZ
+	default 0x80000 if TARGET_RZ_CMN
+
+config MULTI_DTB_FIT_USER_DEF_ADDR
+	default 0x49000000 if TARGET_RZ_CMN
+
+endif

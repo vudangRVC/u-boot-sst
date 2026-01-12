@@ -18,7 +18,7 @@ endif
 ifdef CONFIG_RCAR_64
 ifdef CONFIG_XPL_BUILD
 obj-y	+= rcar64-spl.o
-else
+else ifndef CONFIG_RZ_CMN
 obj-y	+= rcar64-common.o
 endif
 
