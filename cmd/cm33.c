@@ -1,4 +1,3 @@
-#include <common.h>
 #include <command.h>
 #include <linux/delay.h>
 

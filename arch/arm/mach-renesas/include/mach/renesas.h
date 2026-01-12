@@ -21,6 +21,8 @@
 #elif defined(CONFIG_R7S72100)
 #elif defined(CONFIG_RZG2L)
 #include <asm/arch/rzg2l.h>
+#elif defined(CONFIG_R9A07Gx)
+#include <asm/arch/r9a07gx.h>
 #else
 #error "SOC Name not defined"
 #endif
