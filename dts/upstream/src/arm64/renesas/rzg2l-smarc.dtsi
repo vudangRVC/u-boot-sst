@@ -12,6 +12,7 @@
 	aliases {
 		serial1 = &scif2;
 		i2c3 = &i2c3;
+		spi0 = &sbc;
 	};
 
 	osc1: cec-clock {
