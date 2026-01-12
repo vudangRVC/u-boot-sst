@@ -92,6 +92,23 @@ config RZG2L
 	  SoC). Support for additional SoCs in this family (RZ/G2LC, RZ/G2UL,
 	  RZ/V2L & RZ/Five) is not yet available.
 
+config RZ_CMN
+	prompt "Renesas RZ/CMN Family ARM SoCs"
+	select GICV3
+	select RCAR_64
+	imply CLK_RZG2L
+	imply MULTI_DTB_FIT
+	imply PINCTRL_RZG2L
+	imply RENESAS_RAVB
+	imply RENESAS_SDHI
+	imply RZG2L_GPIO
+	imply SCIF_CONSOLE
+	imply SYS_I2C_RZ_RIIC
+	imply SYS_MALLOC_F
+	bool "RZ common boards"
+	help
+		Support for Renesas RZG2L SBC, SMARC RZV2L, SMARC RZG2L and RZV2H
+
 endchoice
 
 config SYS_SOC
@@ -102,5 +119,6 @@ source "arch/arm/mach-renesas/Kconfig.64"
 source "arch/arm/mach-renesas/Kconfig.rza1"
 source "arch/arm/mach-renesas/Kconfig.rzn1"
 source "arch/arm/mach-renesas/Kconfig.rzg2l"
+source "arch/arm/mach-renesas/Kconfig.rzcmn"
 
 endif
