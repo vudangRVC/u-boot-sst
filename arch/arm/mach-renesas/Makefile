@@ -15,6 +15,7 @@ obj-$(CONFIG_RCAR_GEN4) += cpu_info-rcar.o memmap-gen3.o
 obj-$(CONFIG_RCAR_GEN5) += cpu_info-rcar.o memmap-gen3.o
 obj-$(CONFIG_RZ_G2) += cpu_info-rzg.o
 obj-$(CONFIG_RZG2L) += cpu_info-rzg2l.o memmap-rzg2l.o
+obj-$(CONFIG_RZ_CMN) += memmap-rz-cmn.o
 
 ifneq ($(CONFIG_RCAR_64),)
 obj-$(CONFIG_ARMV8_PSCI) += psci-rcar64.o

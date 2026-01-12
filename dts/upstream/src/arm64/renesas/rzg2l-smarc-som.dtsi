@@ -23,6 +23,7 @@
 	aliases {
 		ethernet0 = &eth0;
 		ethernet1 = &eth1;
+		spi0 = &sbc;
 	};
 
 	chosen {
@@ -322,38 +323,22 @@
 };
 
 &sbc {
-	pinctrl-0 = <&qspi0_pins>;
-	pinctrl-names = "default";
+	compatible = "renesas,rpc-r8a77995";
+	bank-width = <2>;
+	num-cs = <1>;
 	status = "okay";
-
-	flash@0 {
-		compatible = "jedec,spi-nor";
+	spi-max-frequency = <40000000>;
+	#address-cells = <1>;
+	#size-cells = <0>;
+	flash0: spi-flash@0 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "spi-flash", "jedec,spi-nor";
+		spi-max-frequency = <40000000>;
+		spi-tx-bus-width = <1>;
+		spi-rx-bus-width = <1>;
 		reg = <0>;
-		m25p,fast-read;
-		spi-max-frequency = <50000000>;
-		spi-rx-bus-width = <4>;
-		spi-tx-bus-width = <4>;
-
-		partitions {
-			compatible = "fixed-partitions";
-			#address-cells = <1>;
-			#size-cells = <1>;
-
-			partition@0 {
-				label = "bl2";
-				reg = <0x00000000 0x0001d000>;
-			};
-
-			partition@1d000 { /* fip is at offset 0x200 */
-				label = "fip";
-				reg = <0x0001d000 0x1fe3000>;
-			};
-
-			partition@2000000 {
-				label = "user";
-				reg = <0x2000000 0x2000000>;
-			};
-		};
+		status = "okay";
 	};
 };
 
