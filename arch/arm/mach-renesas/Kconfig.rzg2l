@@ -9,6 +9,9 @@ config R9A07G044L
 	help
 	  Enable support for the Renesas R9A07G044L (RZ/G2L) SoC.
 
+config R9A07Gx
+	bool "Renesas SoC RZ Common Boards"
+
 choice
 	prompt "Renesas RZ/G2L Family Board selection"
 	default TARGET_RZG2L_SMARC_EVK
@@ -24,10 +27,16 @@ config TARGET_RZG2L_SBC
 	help
 	  Support for Renesas RZG2L Raspberry-Pi-like board
 
+config TARGET_RZ_CMN
+	bool "RZ common boards"
+	help
+          Support for Renesas RZG2L SBC, SMARC RZV2L, SMARC RZG2L and RZV2H
+
 endchoice
 
 source "board/renesas/rzg2l/Kconfig"
 source "board/renesas/rzg2l-sbc/Kconfig"
+source "board/renesas/rz-cmn/Kconfig"
 
 config MULTI_DTB_FIT_UNCOMPRESS_SZ
 	default 0x80000 if TARGET_RZG2L_SMARC_EVK

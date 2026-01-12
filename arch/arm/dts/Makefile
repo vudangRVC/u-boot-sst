@@ -942,7 +942,8 @@ dtb-$(CONFIG_ARCH_IMXRT) += imxrt1050-evk.dtb \
 
 dtb-$(CONFIG_TARGET_RZG2L) += \
 	r9a07g044l2-smarc.dtb \
-	rzg2l-sbc.dtb
+	rzg2l-sbc.dtb \
+	rzv2h-evk-ver1.dtb \
 
 ifdef CONFIG_RCAR_64
 DTC_FLAGS += -R 4 -p 0x1000

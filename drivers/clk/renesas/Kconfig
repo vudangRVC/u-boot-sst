@@ -174,3 +174,8 @@ config CLK_R9A07G044
 
 config CLK_R9A07G044L
 	bool "RZ/G2L (R9A07G044L) clock support"
+
+config CLK_RZ_CMN
+	bool "Renesas R9A07G043F(RZ/Five) clock driver"
+	help
+	  Enable this to support the clocks on Renesas RZ/Five SoC.

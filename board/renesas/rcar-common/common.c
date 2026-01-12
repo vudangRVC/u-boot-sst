@@ -34,12 +34,14 @@ static void apply_atf_overlay(void *fdt_blob)
 		fdt_overlay_apply_node(fdt_blob, 0, atf_fdt_blob, 0);
 }
 
+#if !(defined(CONFIG_R9A07G044L) || defined(CONFIG_R9A07G044C) || defined(CONFIG_R9A07G054L) || defined(CONFIG_R9A07Gx) || defined(CONFIG_R9A07G043U))
 int fdtdec_board_setup(const void *fdt_blob)
 {
 	apply_atf_overlay((void *)fdt_blob);
 
 	return 0;
 }
+#endif
 
 int dram_init(void)
 {
