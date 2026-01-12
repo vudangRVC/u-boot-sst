@@ -23,6 +23,15 @@
 #define BOARD_ID_RZV2L_EVK				0x20
 #define BOARD_ID_RZV2H_EVK				0x30
 
+
+/*
+ * RZ Board SoC Identifiers
+ * These macros define unique IDs for supported SoC variants.
+ * Use them for conditional compilation or SoC-specific configurations.
+ */
+#define RZ_SOC_RZG2L					0x01
+#define RZ_SOC_RZV2L					0x02
+#define RZ_SOC_RZV2H					0x03
 /* boot option */
 
 #define CONFIG_CMDLINE_TAG
@@ -35,8 +44,8 @@
 
 #define GICD_BASE_RZV2H		0x14900000
 #define GICR_BASE_RZV2H		0x14940000
-#define GICD_BASE_RZV2L		0x11900000
-#define GICR_BASE_RZV2L		0x11940000
+#define GICD_BASE_RZG2L		0x11900000
+#define GICR_BASE_RZG2L		0x11940000
 
 /* console */
 #define CONFIG_SYS_CBSIZE		2048
