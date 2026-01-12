@@ -1,0 +1,37 @@
+# Copyright (C) 2026 Renesas Electronics Corporation
+# SPDX-License-Identifier: GPL-2.0+
+
+if RZ_CMN
+
+config R9A07Gx
+	bool "Renesas CLK_RZ_CMN SoC"
+	imply CLK_RZ_CMN
+	help
+		Enable support for the Renesas RZ common SoC family infrastructure.
+
+		This option covers shared support used by multiple Renesas RZ
+		platforms, including RZ/G2L, RZ/V2L, and RZ/V2H MPUs.
+
+choice
+	prompt "Renesas RZ/CMN selection"
+
+config TARGET_RZ_CMN
+	bool "Renesas Common"
+	imply R9A07Gx
+	help
+		Select this target for platforms using the Renesas RZ common
+		support layer.
+
+		This currently includes MPUs such as RZ/G2L, RZ/V2L, and RZ/V2H.
+
+endchoice
+
+source "board/renesas/rz-cmn/Kconfig"
+
+config MULTI_DTB_FIT_UNCOMPRESS_SZ
+	default 0x80000 if TARGET_RZ_CMN
+
+config MULTI_DTB_FIT_USER_DEF_ADDR
+	default 0x49000000 if TARGET_RZ_CMN
+
+endif

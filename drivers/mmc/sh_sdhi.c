@@ -30,9 +30,12 @@
 #include <asm/arch/sh_sdhi.h>
 #include <asm/global_data.h>
 #include <clk.h>
-#include <fdtdec.h>
 
 #define DRIVER_NAME "sh-sdhi"
+#define SDHI_WRITE_TIMEOUT	100000
+#define SDHI_INTERRUPT_TIMEOUT	10000000
+
+extern u64 board_id;
 
 struct sh_sdhi_host {
 	void __iomem *addr;
@@ -589,13 +592,14 @@ static int sh_sdhi_start_cmd(struct sh_sdhi_host *host,
 		       (unsigned short)((cmd->cmdarg >> 16) & ARG1_MASK));
 
 	timeout = 100000;
+	/* Waiting for SD Bus busy to be cleared */
 	while (timeout--) {
-		if (!(sh_sdhi_readw(host, SDHI_INFO2) & INFO2_CBUSY))
+		if ((sh_sdhi_readw(host, SDHI_INFO2) & 0x2000))
 			break;
 	}
 
-	sh_sdhi_writew(host, SDHI_INFO1, 0);
-	sh_sdhi_writew(host, SDHI_INFO2, 0);
+	sh_sdhi_writew(host, SDHI_INFO1, 0);  // Clear INFO1 full
+	sh_sdhi_writew(host, SDHI_INFO2, 0);  // Clear INFO2 full
 
 	host->wait_int = 0;
 	sh_sdhi_writew(host, SDHI_INFO1_MASK,
@@ -608,12 +612,14 @@ static int sh_sdhi_start_cmd(struct sh_sdhi_host *host,
 
 	sh_sdhi_writew(host, SDHI_CMD, (unsigned short)(shcmd & CMD_MASK));
 
-	timeout = 100000;
+	timeout = SDHI_WRITE_TIMEOUT;
 	while (timeout--) {
 		if (sh_sdhi_readw(host, SDHI_INFO1) & INFO1_RESP_END)
 			break;
-		udelay(1);
+		udelay(1);  // Delay 1us
 	}
+
+	if (!timeout) return -ETIMEDOUT;
 
 	time = sh_sdhi_wait_interrupt_flag(host);
 	if (!time) {
@@ -654,11 +660,11 @@ static int sh_sdhi_start_cmd(struct sh_sdhi_host *host,
 	if (data)
 		ret = sh_sdhi_data_trans(host, data, opc);
 
-	debug("ret = %d, resp = %08x, %08x, %08x, %08x\n",
-	      ret, cmd->response[0], cmd->response[1],
-	      cmd->response[2], cmd->response[3]);
+		debug("ret = %d, resp = %08x, %08x, %08x, %08x\n",
+		ret, cmd->response[0], cmd->response[1],
+		cmd->response[2], cmd->response[3]);
 
-	timeout = 100000;
+	timeout = SDHI_WRITE_TIMEOUT;
 	while (timeout--) {
 		if (sh_sdhi_readw(host, SDHI_INFO2) & 0x2000)
 			break;
@@ -790,7 +796,6 @@ int sh_sdhi_init(unsigned long addr, int ch, unsigned long quirks)
 	if (!host)
 		return -ENOMEM;
 
-	memset(host, 0, sizeof(struct sh_sdhi_host));
 	mmc = mmc_create(&sh_sdhi_cfg, host);
 	if (!mmc) {
 		ret = -1;
@@ -865,16 +870,18 @@ static int sh_sdhi_dm_probe(struct udevice *dev)
 	if (!host->addr)
 		return -ENOMEM;
 
-	ret = clk_get_by_index(dev, 0, &sh_sdhi_clk);
-	if (ret) {
-		debug("failed to get clock, ret=%d\n", ret);
-		return ret;
-	}
+	if (board_id != BOARD_ID_RZV2H_EVK) {	
+		ret = clk_get_by_index(dev, 0, &sh_sdhi_clk);
+		if (ret) {
+			debug("failed to get clock, ret=%d\n", ret);
+			return ret;
+		}
 
-	ret = clk_enable(&sh_sdhi_clk);
-	if (ret) {
-		debug("failed to enable clock, ret=%d\n", ret);
-		return ret;
+		ret = clk_enable(&sh_sdhi_clk);
+		if (ret) {
+			debug("failed to enable clock, ret=%d\n", ret);
+			return ret;
+		}
 	}
 
 	host->quirks = quirks;
@@ -927,6 +934,7 @@ static const struct udevice_id sh_sdhi_sd_match[] = {
 	{ .compatible = "renesas,sdhi-r9a07g044c", .data = SH_SDHI_QUIRK_64BIT_BUF },
 	{ .compatible = "renesas,sdhi-r9a07g043u", .data = SH_SDHI_QUIRK_64BIT_BUF },
 	{ .compatible = "renesas,sdhi-r9a07g043f", .data = SH_SDHI_QUIRK_64BIT_BUF },
+	{ .compatible = "renesas,sdhi-r9a09g057", .data = SH_SDHI_QUIRK_64BIT_BUF },
 	{ /* sentinel */ }
 };
 
