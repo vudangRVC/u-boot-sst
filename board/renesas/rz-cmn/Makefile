@@ -6,4 +6,5 @@
 # SPDX-License-Identifier: GPL-2.0+
 #
 
-obj-y	:= rz-cmn.o ../rcar-common/common.o
+obj-y	:= rz-cmn.o
+obj-$(CONFIG_RCAR_GEN3) += ../rcar-common/common.o

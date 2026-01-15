@@ -1,4 +1,4 @@
-#include <common.h>
+// #include <common.h>
 #include <cpu_func.h>
 #include <image.h>
 #include <init.h>
@@ -14,7 +14,7 @@
 #include <asm/arch/sys_proto.h>
 #include <asm/gpio.h>
 #include <asm/arch/gpio.h>
-#include <asm/arch/rmobile.h>
+#include <asm/arch/renesas.h>
 #include <asm/arch/rcar-mstp.h>
 #include <asm/arch/sh_sdhi.h>
 #include <miiphy.h>
@@ -830,6 +830,7 @@ pmic_failed:
 
 int board_early_init_f(void)
 {
+	s_init();
 	return 0;
 }
 
@@ -847,7 +848,7 @@ int board_mmc_init(struct bd_info *bis)
 int board_init(void)
 {
 	/* adress of boot parameters */
-	gd->bd->bi_boot_params = CONFIG_SYS_TEXT_BASE + 0x50000;
+	gd->bd->bi_boot_params = CONFIG_TEXT_BASE + 0x50000;
 
 	if(board_id == BOARD_ID_RZV2L_EVK || board_id == BOARD_ID_RZG2L_EVK)
 	{
@@ -859,6 +860,11 @@ int board_init(void)
 		board_pmic_i2c_init();
 	}
 
+	return 0;
+}
+
+int ft_board_setup(void *blob, struct bd_info *bd)
+{
 	return 0;
 }
 

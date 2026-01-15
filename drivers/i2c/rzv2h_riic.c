@@ -8,7 +8,7 @@
  */
 
 #include <errno.h>
-#include <common.h>
+// #include <common.h>
 #include <asm/io.h>
 #ifdef CONFIG_ARCH_RMOBILE
 #include <asm/arch/rmobile.h>

@@ -6,7 +6,7 @@
 #ifndef __RZ_CMN_H
 #define __RZ_CMN_H
 
-#include <asm/arch/rmobile.h>
+#include <asm/arch/renesas.h>
 #include <configs/rz-cmn_env.h>
 
 #define CONFIG_REMAKE_ELF
@@ -22,7 +22,6 @@
 #define BOARD_ID_RZG2L_SBC				0x11
 #define BOARD_ID_RZV2L_EVK				0x20
 #define BOARD_ID_RZV2H_EVK				0x30
-
 
 /*
  * RZ Board SoC Identifiers
@@ -40,7 +39,7 @@
 
 /* Generic Interrupt Controller Definitions */
 /* RZ/V2H, V2L, G2L and RZG2L-SBC use GIC-v3 */
-#define CONFIG_GICV3
+// #define CONFIG_GICV3
 
 #define GICD_BASE_RZV2H		0x14900000
 #define GICR_BASE_RZV2H		0x14940000
@@ -48,10 +47,10 @@
 #define GICR_BASE_RZG2L		0x11940000
 
 /* console */
-#define CONFIG_SYS_CBSIZE		2048
-#define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
-#define CONFIG_SYS_MAXARGS		64
-#define CONFIG_SYS_BAUDRATE_TABLE	{ 115200, 38400 }
+// #define CONFIG_SYS_CBSIZE		2048
+// #define CONFIG_SYS_BARGSIZE		CONFIG_SYS_CBSIZE
+// #define CONFIG_SYS_MAXARGS		64
+// #define CONFIG_SYS_BAUDRATE_TABLE	{ 115200, 38400 }
 
 /* PHY needs a longer autoneg timeout */
 #define PHY_ANEG_TIMEOUT		20000
@@ -70,16 +69,16 @@
 #define CONFIG_VERY_BIG_RAM
 #define CONFIG_MAX_MEM_MAPPED		(0x80000000u - DRAM_RSV_SIZE)
 
-#define CONFIG_SYS_MONITOR_BASE		0x00000000
-#define CONFIG_SYS_MONITOR_LEN		(1 * 1024 * 1024)
-#define CONFIG_SYS_MALLOC_LEN		(64 * 1024 * 1024)
-#define CONFIG_SYS_BOOTM_LEN		(64 << 20)
+// #define CONFIG_SYS_MONITOR_BASE		0x00000000
+// #define CONFIG_SYS_MONITOR_LEN		(1 * 1024 * 1024)
+// #define CONFIG_SYS_MALLOC_LEN		(64 * 1024 * 1024)
+// #define CONFIG_SYS_BOOTM_LEN		(64 << 20)
 
 /* The HF/QSPI layout permits up to 1 MiB large bootloader blob */
 #define CONFIG_BOARD_SIZE_LIMIT		1048576
 
 /* ENV setting */
-#define CONFIG_EXTRA_ENV_SETTINGS \
+#define CFG_EXTRA_ENV_SETTINGS \
 	"bootenvfile=uEnv.txt\0" \
 	"image=Image\0" \
 	"importbootenv=echo Importing environment from mmc${mmcdev} ...; " \

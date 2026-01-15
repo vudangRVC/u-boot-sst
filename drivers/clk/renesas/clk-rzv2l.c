@@ -8,8 +8,8 @@
  * r8a774a1 Clock Pulse Generator / Module Standby and Software Reset 
  */
 
-#include <common.h>
-#include <clk-uclass.h>
+// #include <common.h>
+ #include <clk-uclass.h>
 #include <dm.h>
 #include <errno.h>
 #include <log.h>

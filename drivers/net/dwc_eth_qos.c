@@ -29,7 +29,7 @@
 
 #define LOG_CATEGORY UCLASS_ETH
 
-#include <common.h>
+// #include <common.h>
 #include <clk.h>
 #include <cpu_func.h>
 #include <dm.h>
@@ -53,6 +53,36 @@
 #endif
 #include <linux/bitops.h>
 #include <linux/delay.h>
+
+#ifndef PHY_INTERFACE_MODE_NONE
+#define PHY_INTERFACE_MODE_NONE PHY_INTERFACE_MODE_NA
+#endif
+
+static phy_interface_t phy_get_interface_by_name(const char *name)
+{
+	phy_interface_t i;
+
+	if (!name)
+		return PHY_INTERFACE_MODE_NA;
+
+	for (i = 0; i < PHY_INTERFACE_MODE_MAX; i++) {
+		const char *mode = phy_string_for_interface(i);
+
+		if (!mode || !*mode)
+			continue;
+		if (!strcmp(name, mode))
+			return i;
+	}
+
+	return PHY_INTERFACE_MODE_NA;
+}
+
+#ifndef clk_free
+static inline void clk_free(struct clk *clk)
+{
+	clk_disable(clk);
+}
+#endif
 
 /* Core registers */
 
