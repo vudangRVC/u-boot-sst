@@ -164,7 +164,7 @@ static int sh_sdhi_intr(void *dev_id)
 
 static int sh_sdhi_wait_interrupt_flag(struct sh_sdhi_host *host)
 {
-	int timeout = 10000000;
+	int timeout = SDHI_INTERRUPT_TIMEOUT;
 
 	while (1) {
 		timeout--;
@@ -204,7 +204,7 @@ static int sh_sdhi_clock_control(struct sh_sdhi_host *host, unsigned long clk)
 
 	sh_sdhi_writew(host, SDHI_CLK_CTRL, clkdiv);
 
-	timeout = 100000;
+	timeout = SDHI_WRITE_TIMEOUT;
 	/* Waiting for SD Bus busy to be cleared */
 	while (timeout--) {
 		if ((sh_sdhi_readw(host, SDHI_INFO2) & 0x2000))
@@ -228,7 +228,7 @@ static int sh_sdhi_sync_reset(struct sh_sdhi_host *host)
 	sh_sdhi_writew(host, SDHI_CLK_CTRL,
 		       CLK_ENABLE | sh_sdhi_readw(host, SDHI_CLK_CTRL));
 
-	timeout = 100000;
+	timeout = SDHI_WRITE_TIMEOUT;
 	while (timeout--) {
 		if (!(sh_sdhi_readw(host, SDHI_INFO2) & INFO2_CBUSY))
 			break;
@@ -591,7 +591,7 @@ static int sh_sdhi_start_cmd(struct sh_sdhi_host *host,
 	sh_sdhi_writew(host, SDHI_ARG1,
 		       (unsigned short)((cmd->cmdarg >> 16) & ARG1_MASK));
 
-	timeout = 100000;
+	timeout = SDHI_WRITE_TIMEOUT;
 	/* Waiting for SD Bus busy to be cleared */
 	while (timeout--) {
 		if ((sh_sdhi_readw(host, SDHI_INFO2) & 0x2000))
@@ -660,9 +660,9 @@ static int sh_sdhi_start_cmd(struct sh_sdhi_host *host,
 	if (data)
 		ret = sh_sdhi_data_trans(host, data, opc);
 
-		debug("ret = %d, resp = %08x, %08x, %08x, %08x\n",
-		ret, cmd->response[0], cmd->response[1],
-		cmd->response[2], cmd->response[3]);
+	debug("ret = %d, resp = %08x, %08x, %08x, %08x\n",
+	      ret, cmd->response[0], cmd->response[1],
+	      cmd->response[2], cmd->response[3]);
 
 	timeout = SDHI_WRITE_TIMEOUT;
 	while (timeout--) {
@@ -935,6 +935,7 @@ static const struct udevice_id sh_sdhi_sd_match[] = {
 	{ .compatible = "renesas,sdhi-r9a07g043u", .data = SH_SDHI_QUIRK_64BIT_BUF },
 	{ .compatible = "renesas,sdhi-r9a07g043f", .data = SH_SDHI_QUIRK_64BIT_BUF },
 	{ .compatible = "renesas,sdhi-r9a09g057", .data = SH_SDHI_QUIRK_64BIT_BUF },
+	{ .compatible = "renesas,rzg2l-sdhi", .data = SH_SDHI_QUIRK_64BIT_BUF },
 	{ /* sentinel */ }
 };
 
