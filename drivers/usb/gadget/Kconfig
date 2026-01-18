@@ -105,6 +105,15 @@ config USB_GADGET_AT91
 	bool "Atmel AT91 USB Gadget Controller"
 	depends on ARCH_AT91
 
+config USB_RENESAS_USBHS
+	bool "Renesas RCar USB2.0 HS controller (gadget mode)"
+	select USB_GADGET_DUALSPEED
+	help
+	  The Renesas Rcar USB 2.0 high-speed gadget controller
+	  integrated into Salvator and Kingfisher boards. Select this
+	  option if you want the driver to operate in Peripheral mode.
+	  This option requires USB_GADGET to be enabled.
+
 config USB_GADGET_DWC2_OTG
 	bool "DesignWare USB2.0 HS OTG controller (gadget mode)"
 	select USB_GADGET_DUALSPEED
