@@ -988,6 +988,7 @@ extern struct usb_ep *usb_ep_autoconfig(struct usb_gadget *,
 extern void usb_ep_autoconfig_reset(struct usb_gadget *);
 
 extern int dm_usb_gadget_handle_interrupts(struct udevice *);
+extern int usb_gadget_handle_interrupts(int index);
 
 /**
  * struct usb_gadget_generic_ops - The functions that a gadget driver must implement.
