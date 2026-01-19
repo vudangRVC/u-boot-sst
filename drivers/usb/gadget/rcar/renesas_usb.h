@@ -21,7 +21,7 @@
 #ifndef RENESAS_USB_H
 #define RENESAS_USB_H
 #include <linux/usb/ch9.h>
-#include <common.h>
+// #include <common.h>
 #include <dm.h>
 #include <dm/device_compat.h>
 
