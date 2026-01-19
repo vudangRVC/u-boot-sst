@@ -22,6 +22,7 @@
 #define BOARD_ID_RZG2L_SBC				0x11
 #define BOARD_ID_RZV2L_EVK				0x20
 #define BOARD_ID_RZV2H_EVK				0x30
+#define BOARD_ID_RZV2H_RDK				0x31
 
 /*
  * RZ Board SoC Identifiers
