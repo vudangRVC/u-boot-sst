@@ -946,7 +946,8 @@ dtb-$(CONFIG_TARGET_RZG2L) += \
 	rzv2h-evk-ver1.dtb \
 	smarc-rzg2l.dtb \
 	smarc-rzv2l.dtb \
-	rzv2h-rdk-ver1.dtb
+	rzv2h-rdk-ver1.dtb \
+	rzv2h-sbc-ver1.dtb
 
 ifdef CONFIG_RCAR_64
 DTC_FLAGS += -R 4 -p 0x1000
