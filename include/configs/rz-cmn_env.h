@@ -51,11 +51,12 @@
 /* Built-in DTB table — add more boards here */
 #ifndef RZ_FDT_SELECT_TABLE
 #define RZ_FDT_SELECT_TABLE \
-	RZ_FDT_CASE("rzg2l-sbc", "1", "0", "rzg2l-sbc.dtb") \
-	RZ_FDT_CASE("rzg2l-evk", "1", "0", "r9a07g044l2-smarc.dtb") \
-	RZ_FDT_CASE("rzv2l-evk", "1", "0", "r9a07g054l2-smarc.dtb") \
-	RZ_FDT_CASE("rzv2h-evk", "1", "0", "r9a09g057h4-evk-ver1.dtb") \
-	RZ_FDT_CASE("rzv2h-evk", "2", "0", "r9a09g057h4-evk-ver1.dtb")
+	RZ_FDT_CASE("rzg2l-sbc", "1", "0", "rzg2l-sbc.dtb") 			\
+	RZ_FDT_CASE("rzg2l-evk", "1", "0", "r9a07g044l2-smarc.dtb") 	\
+	RZ_FDT_CASE("rzv2l-evk", "1", "0", "r9a07g054l2-smarc.dtb") 	\
+	RZ_FDT_CASE("rzv2h-evk", "1", "0", "r9a09g057h4-evk-ver1.dtb") 	\
+	RZ_FDT_CASE("rzv2h-evk", "2", "0", "r9a09g057h4-evk-ver1.dtb") 	\
+	RZ_FDT_CASE("rzv2h-rdk", "1", "0", "r9a09g057h4-rdk-ver1.dtb")
 #endif
 
 /* Built-in overlay flags — add more overlays here */
