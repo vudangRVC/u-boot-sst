@@ -11,7 +11,7 @@ CONFIG_R9A07Gx=y
 CONFIG_RZ_CMN=y
 CONFIG_TARGET_RZ_CMN=y
 CONFIG_DEFAULT_DEVICE_TREE="renesas/rzg2l-sbc"
-CONFIG_OF_LIST="renesas/smarc-rzv2l renesas/rzg2l-sbc renesas/smarc-rzg2l renesas/rzv2h-evk-ver1 renesas/rzv2h-rdk-ver1 renesas/imdt-v2h-sbc"
+CONFIG_OF_LIST="renesas/smarc-rzv2l renesas/rzg2l-sbc renesas/smarc-rzg2l renesas/rzv2h-evk-ver1 renesas/rzv2h-rdk-ver1 renesas/imdt-v2h-sbc renesas/rs-g2l100"
 CONFIG_SMBIOS_PRODUCT_NAME=""
 # CONFIG_SPL is not set
 CONFIG_OF_UPSTREAM is not set
@@ -100,6 +100,8 @@ CONFIG_RENESAS_RPC_SPI=y
 CONFIG_CMD_SF=y
 CONFIG_CMD_SPI=y
 CONFIG_SPI_FLASH_STMICRO=y
+CONFIG_SPI_FLASH_MACRONIX=y
+CONFIG_SPI_FLASH_ATMEL=y
 CONFIG_SPI_FLASH_ISSI=y
 CONFIG_ENV_SECT_SIZE=0x20000
 CONFIG_MTD=y
