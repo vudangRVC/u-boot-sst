@@ -51,6 +51,7 @@
 /* Built-in DTB table — add more boards here */
 #ifndef RZ_FDT_SELECT_TABLE
 #define RZ_FDT_SELECT_TABLE \
+	RZ_FDT_CASE("rs-g2l100", "1", "0", "rs-g2l100.dtb") \
 	RZ_FDT_CASE("rzg2l-sbc", "1", "0", "rzg2l-sbc.dtb") \
 	RZ_FDT_CASE("rzg2l-evk", "1", "0", "rzg2l-evk.dtb") \
 	RZ_FDT_CASE("rzv2l-evk", "1", "0", "rzv2l-evk.dtb") \
