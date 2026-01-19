@@ -624,7 +624,7 @@ static void s_init_rzg2l_sbc(void)
 
 void s_init(void)
 {
-	if (board_id == BOARD_ID_RZV2H_EVK) {
+	if (board_id == BOARD_ID_RZV2H_EVK || board_id == BOARD_ID_RZV2H_RDK) {
 		s_init_rzv2h();
 	} else if (board_id == BOARD_ID_RZG2L_SBC) {
 		s_init_rzg2l_sbc();
