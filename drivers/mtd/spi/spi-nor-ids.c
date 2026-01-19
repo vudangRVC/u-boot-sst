@@ -66,7 +66,6 @@ const struct flash_info spi_nor_ids[] = {
 	/* Atmel -- some are (confusingly) marketed as "DataFlash" */
 	{ INFO("at26df321",	0x1f4700, 0, 64 * 1024, 64, SECT_4K) },
 	{ INFO("at25df321a",	0x1f4701, 0, 64 * 1024, 64, SECT_4K) },
-
 	{ INFO("at45db011d",	0x1f2200, 0, 64 * 1024,   4, SECT_4K) },
 	{ INFO("at45db021d",	0x1f2300, 0, 64 * 1024,   8, SECT_4K) },
 	{ INFO("at45db041d",	0x1f2400, 0, 64 * 1024,   8, SECT_4K) },
@@ -76,6 +75,7 @@ const struct flash_info spi_nor_ids[] = {
 	{ INFO("at45db641d",	0x1f2800, 0, 64 * 1024, 128, SECT_4K) },
 	{ INFO("at25sl321",	0x1f4216, 0, 64 * 1024,  64, SECT_4K) },
 	{ INFO("at26df081a",	0x1f4501, 0, 64 * 1024,  16, SECT_4K) },
+	{ INFO("at25sf128a",  0x1f8901,     0,  64 * 1024, 256, SECT_4K | SPI_NOR_QUAD_READ) },
 #endif
 #ifdef CONFIG_SPI_FLASH_EON		/* EON */
 	/* EON -- en25xxx */

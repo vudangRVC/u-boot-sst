@@ -630,7 +630,7 @@ void s_init(void)
 		s_init_rzv2h();
 	} else if (board_id == BOARD_ID_RZG2L_SBC) {
 		s_init_rzg2l_sbc();
-	} else if (board_id == BOARD_ID_RZV2L_EVK || board_id == BOARD_ID_RZG2L_EVK) {
+	} else if (board_id == BOARD_ID_RZV2L_EVK || board_id == BOARD_ID_RZG2L_EVK || board_id == BOARD_ID_RS_G2L100) {
 		s_init_rzg2l();
 	} else {
 		return;
@@ -852,7 +852,7 @@ int board_init(void)
 	/* adress of boot parameters */
 	gd->bd->bi_boot_params = CONFIG_TEXT_BASE + 0x50000;
 
-	if(board_id == BOARD_ID_RZV2L_EVK || board_id == BOARD_ID_RZG2L_EVK)
+	if(board_id == BOARD_ID_RZV2L_EVK || board_id == BOARD_ID_RZG2L_EVK || board_id == BOARD_ID_RS_G2L100)
 	{
 		board_usb_init_rzg2l();
 	} else if (board_id == BOARD_ID_RZV2H_EVK || board_id == BOARD_ID_IMDT_V2H_SBC)
