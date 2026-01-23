@@ -155,6 +155,9 @@ config PINCTRL_RZG2L
 
 config PINCTRL_PFC_RZG2L
 	bool "Renesas RZ/G2L pin control driver"
+	depends on PINCTRL
+	depends on PINCONF
+	depends on PINCTRL_PFC
 	help
 	  Support pin multiplexing control on Renesas RZ/G2L SoCs.
 

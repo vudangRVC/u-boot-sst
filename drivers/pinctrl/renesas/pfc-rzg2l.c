@@ -5,6 +5,7 @@
  * Copyright (C) 2020 Renesas Electronics Corporation
  */
 // #include <common.h>
+#include <clk.h>
 #include <dm.h>
 #include <dm/lists.h>
 #include <dm/pinctrl.h>
@@ -101,11 +102,25 @@ static int rzg2l_pinctrl_probe(struct udevice *dev)
 {
 	struct rzg2l_pinctrl_priv *priv = dev_get_plat(dev);
 	ofnode node;
+	struct clk clk;
+	int ret;
 
 	priv->regs = dev_read_addr_ptr(dev);
 	if (!priv->regs) {
 		dev_err(dev, "can't get address\n");
 		return -EINVAL;
+	}
+
+	ret = clk_get_by_index(dev, 0, &clk);
+	if (ret < 0) {
+		dev_err(dev, "failed to get gpio module clock\n");
+		return ret;
+	}
+
+	ret = clk_enable(&clk);
+	if (ret < 0) {
+		dev_err(dev, "failed to enable gpio module clock\n");
+		return ret;
 	}
 
 	dev_for_each_subnode(node, dev) {
