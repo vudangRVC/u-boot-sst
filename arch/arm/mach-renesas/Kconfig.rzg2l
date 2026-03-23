@@ -30,9 +30,9 @@ source "board/renesas/rzg2l/Kconfig"
 source "board/renesas/rzpi/Kconfig"
 
 config MULTI_DTB_FIT_UNCOMPRESS_SZ
-	default 0x80000 if TARGET_RZG2L_SMARC_EVK
+	default 0x80000 if TARGET_RZG2L_SMARC_EVK || TARGET_RZPI
 
 config MULTI_DTB_FIT_USER_DEF_ADDR
-	default 0x49000000 if TARGET_RZG2L_SMARC_EVK
+	default 0x49000000 if TARGET_RZG2L_SMARC_EVK || TARGET_RZPI
 
 endif

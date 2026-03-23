@@ -41,7 +41,7 @@
 
 /* Generic Interrupt Controller Definitions */
 /* RZ/G2L use GIC-v3 */
-#define CONFIG_GICV3
+// #define CONFIG_GICV3
 #define GICD_BASE	0x11900000
 #define GICR_BASE	0x11960000
 
@@ -68,10 +68,10 @@
 #define CONFIG_VERY_BIG_RAM
 #define CONFIG_MAX_MEM_MAPPED		(0x80000000u - DRAM_RSV_SIZE)
 
-#define CONFIG_SYS_MONITOR_BASE		0x00000000
-#define CONFIG_SYS_MONITOR_LEN		(1 * 1024 * 1024)
-#define CONFIG_SYS_MALLOC_LEN		(64 * 1024 * 1024)
-#define CONFIG_SYS_BOOTM_LEN		(64 << 20)
+// #define CONFIG_SYS_MONITOR_BASE		0x00000000
+// #define CONFIG_SYS_MONITOR_LEN		(1 * 1024 * 1024)
+// #define CONFIG_SYS_MALLOC_LEN		(64 * 1024 * 1024)
+// #define CONFIG_SYS_BOOTM_LEN		(64 << 20)
 
 /* The HF/QSPI layout permits up to 1 MiB large bootloader blob */
 #define CONFIG_BOARD_SIZE_LIMIT		1048576
