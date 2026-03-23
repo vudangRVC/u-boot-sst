@@ -118,8 +118,10 @@ int renesas_clk_remove(void __iomem *base, struct cpg_mssr_info *info)
 {
 	unsigned int i;
 
+	#ifdef TMU_BASE
 	/* Stop TMU0 */
 	clrbits_le32(TMU_BASE + TSTR0, TSTR0_STR0);
+	#endif
 
 	/* Stop module clock */
 	for (i = 0; i < info->mstp_table_size; i++) {
