@@ -44,12 +44,12 @@ static const struct tfa_info *get_tfa_info(void)
 
 const u8 *rzg_get_cpu_name(void)
 {
-	return get_tfa_info()->cpu_name;
+	return 0;
 }
 
 u32 renesas_get_cpu_type(void)
 {
-	return get_tfa_info()->cpu_type;
+	return 0;
 }
 
 u32 renesas_get_cpu_rev_integer(void)
