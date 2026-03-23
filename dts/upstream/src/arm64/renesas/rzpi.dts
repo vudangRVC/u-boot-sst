@@ -34,35 +34,35 @@
 
 &pinctrl {
 	eth0_pins: eth0 {
-		pinmux = <RZG2L_PINMUX(20, 0, 1)>, //TX_CLK
-				<RZG2L_PINMUX(20, 1, 1)>, //TX_EN
-				<RZG2L_PINMUX(20, 2, 1)>, //TXD0
-				<RZG2L_PINMUX(21, 0, 1)>, //TXD1
-				<RZG2L_PINMUX(21, 1, 1)>, //TXD2
-				<RZG2L_PINMUX(22, 0, 1)>, //TXD3
-				<RZG2L_PINMUX(24, 0, 1)>, //RX_CLK
-				<RZG2L_PINMUX(24, 1, 1)>, //RX_DV
-				<RZG2L_PINMUX(25, 0, 1)>, //RXD0
-				<RZG2L_PINMUX(25, 1, 1)>, //RXD1
-				<RZG2L_PINMUX(26, 0, 1)>, //RXD2
-				<RZG2L_PINMUX(26, 1, 1)>, //RXD3
-				<RZG2L_PINMUX(27, 1, 1)>, //MDC
-				<RZG2L_PINMUX(28, 0, 1)>; //MDIO
+		pinmux = <RZG2L_PORT_PINMUX(20, 0, 1)>, //TX_CLK
+				<RZG2L_PORT_PINMUX(20, 1, 1)>, //TX_EN
+				<RZG2L_PORT_PINMUX(20, 2, 1)>, //TXD0
+				<RZG2L_PORT_PINMUX(21, 0, 1)>, //TXD1
+				<RZG2L_PORT_PINMUX(21, 1, 1)>, //TXD2
+				<RZG2L_PORT_PINMUX(22, 0, 1)>, //TXD3
+				<RZG2L_PORT_PINMUX(24, 0, 1)>, //RX_CLK
+				<RZG2L_PORT_PINMUX(24, 1, 1)>, //RX_DV
+				<RZG2L_PORT_PINMUX(25, 0, 1)>, //RXD0
+				<RZG2L_PORT_PINMUX(25, 1, 1)>, //RXD1
+				<RZG2L_PORT_PINMUX(26, 0, 1)>, //RXD2
+				<RZG2L_PORT_PINMUX(26, 1, 1)>, //RXD3
+				<RZG2L_PORT_PINMUX(27, 1, 1)>, //MDC
+				<RZG2L_PORT_PINMUX(28, 0, 1)>; //MDIO
 	};
 
 	eth1_pins: eth1 {
-		pinmux = <RZG2L_PINMUX(29, 0, 1)>, //TX_CLK
-				<RZG2L_PINMUX(29, 1, 1)>, //TX_EN
-				<RZG2L_PINMUX(30, 0, 1)>, //TXD0
-				<RZG2L_PINMUX(30, 1, 1)>, //TXD1
-				<RZG2L_PINMUX(31, 0, 1)>, //TXD2
-				<RZG2L_PINMUX(31, 1, 1)>, //TXD3
-				<RZG2L_PINMUX(33, 1, 1)>, //RX_CLK
-				<RZG2L_PINMUX(34, 0, 1)>, //RX_DV
-				<RZG2L_PINMUX(34, 1, 1)>, //RXD0
-				<RZG2L_PINMUX(35, 0, 1)>, //RXD1
-				<RZG2L_PINMUX(35, 1, 1)>, //RXD2
-				<RZG2L_PINMUX(36, 0, 1)>; //RXD3
+		pinmux = <RZG2L_PORT_PINMUX(29, 0, 1)>, //TX_CLK
+				<RZG2L_PORT_PINMUX(29, 1, 1)>, //TX_EN
+				<RZG2L_PORT_PINMUX(30, 0, 1)>, //TXD0
+				<RZG2L_PORT_PINMUX(30, 1, 1)>, //TXD1
+				<RZG2L_PORT_PINMUX(31, 0, 1)>, //TXD2
+				<RZG2L_PORT_PINMUX(31, 1, 1)>, //TXD3
+				<RZG2L_PORT_PINMUX(33, 1, 1)>, //RX_CLK
+				<RZG2L_PORT_PINMUX(34, 0, 1)>, //RX_DV
+				<RZG2L_PORT_PINMUX(34, 1, 1)>, //RXD0
+				<RZG2L_PORT_PINMUX(35, 0, 1)>, //RXD1
+				<RZG2L_PORT_PINMUX(35, 1, 1)>, //RXD2
+				<RZG2L_PORT_PINMUX(36, 0, 1)>; //RXD3
 	};
 
 };
@@ -77,21 +77,21 @@
 	status = "okay";
 
 	phy-handle = <&phy0>;
-	phy-mode = "rgmii";
+	phy-mode = "rgmii-id";
 	phy-index = <0>;
 	phy0: ethernet-phy@4 {
 		reg = <4>;
 	};
 };
 
-&i2c1 {
+&eth1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&eth1_pins>;
 	alt-mdio-base = <0x11c20000>;
 	status = "okay";
 
 	phy-handle = <&phy1>;
-	phy-mode = "rgmii";
+	phy-mode = "rgmii-id";
 	phy-index = <1>;
 	phy1: ethernet-phy@1 {
 		reg = <1>;

@@ -37,6 +37,7 @@
 #define RAVB_REG_RIC0		0x360
 #define RAVB_REG_RIC1		0x368
 #define RAVB_REG_RIC2		0x370
+#define RAVB_REG_RIC3		0x388
 #define RAVB_REG_TIC		0x378
 #define RAVB_REG_ECMR		0x500
 #define RAVB_REG_RFLR		0x508
@@ -73,6 +74,10 @@
 #define PIR_MDO			BIT(2)
 #define PIR_MMD			BIT(1)
 #define PIR_MDC			BIT(0)
+
+/* TOE Registers */
+#define CSR0			0x800
+#define CSR0_RPE		0x00000020
 
 #define ECMR_TRCCM		BIT(26)
 #define ECMR_RCPT		BIT(25)
@@ -127,6 +132,7 @@
 	 RAVB_RX_DESC_MSC_RTSF | RAVB_RX_DESC_MSC_CEEF)
 
 #define RAVB_TX_TIMEOUT_MS		1000
+#define RAVB_RCV_BUFF_MAX		8192
 
 struct ravb_device_ops {
 	void (*mac_init)(struct udevice *dev);
@@ -157,7 +163,10 @@ struct ravb_priv {
 	struct phy_device	*phydev;
 	struct mii_dev		*bus;
 	void __iomem		*iobase;
+	void __iomem		*mdiobase;
 	struct clk_bulk		clks;
+	struct clk			clk;
+	struct gpio_desc	reset_gpio;
 	struct reset_ctl	rst;
 };
 
@@ -338,6 +347,13 @@ static int ravb_phy_config(struct udevice *dev)
 	struct phy_device *phydev;
 	int reg;
 
+	if (dm_gpio_is_valid(&eth->reset_gpio)) {
+		dm_gpio_set_value(&eth->reset_gpio, 1);
+		mdelay(20);
+		dm_gpio_set_value(&eth->reset_gpio, 0);
+		mdelay(1);
+	}
+
 	phydev = phy_connect(eth->bus, -1, dev, pdata->phy_interface);
 	if (!phydev)
 		return -ENODEV;
@@ -446,11 +462,28 @@ static int ravb_dmac_init(struct udevice *dev)
 	writel(0, eth->iobase + RAVB_REG_RIC1);
 	writel(0, eth->iobase + RAVB_REG_RIC2);
 	writel(0, eth->iobase + RAVB_REG_TIC);
+#if defined(CONFIG_RZG2L)
+	writel(0, eth->iobase + RAVB_REG_RIC3);
+#endif
 
 	/* Set little endian */
 	clrbits_le32(eth->iobase + RAVB_REG_CCC, CCC_BOC);
 
+#if defined(CONFIG_RZG2L)
+	/* AVB rx set */
+	writel(0x60000000, eth->iobase + RAVB_REG_RCR);
+
+	/* Set Max Frame Length (RTC) */
+	writel(0x7ffc0000 | RAVB_RCV_BUFF_MAX, eth->iobase + RAVB_REG_RTC);
+
+	/* FIFO size set */
+	writel(0x00222200, eth->iobase + RAVB_REG_TGC);
+
+	writel(0, eth->iobase + RAVB_REG_TCCR);
+#endif
+
 	device_ops->dmac_init(dev);
+
 	return 0;
 }
 
@@ -516,6 +549,10 @@ static int ravb_config(struct udevice *dev)
 		(struct ravb_device_ops *)dev_get_driver_data(dev);
 	struct ravb_priv *eth = dev_get_priv(dev);
 	struct phy_device *phy = eth->phydev;
+#if !(defined(CONFIG_RZG2L) || defined(CONFIG_R9A07G054L) || \
+	defined(CONFIG_R9A07G043U) || defined(CONFIG_RZF_DEV) || defined(CONFIG_R9A08G045S))
+	u32 mask = ECMR_CHG_DM | ECMR_RE | ECMR_TE;
+#endif
 	int ret;
 
 	/* Configure AVB-DMAC register */
@@ -525,9 +562,38 @@ static int ravb_config(struct udevice *dev)
 	ravb_mac_init(dev);
 	ravb_write_hwaddr(dev);
 
+#if defined(CONFIG_RZG2L) || defined(CONFIG_R9A07G054L) || \
+	defined(CONFIG_R9A07G043U) || defined(CONFIG_RZF_DEV) || defined(CONFIG_R9A08G045S)
+	/* Configure TOE registers */
+	writel(CSR0_TPE | CSR0_RPE, eth->iobase + CSR0);
+#endif
+
 	ret = phy_startup(phy);
 	if (ret)
 		return ret;
+
+	/* Set the transfer speed */
+#if defined(CONFIG_RZG2L) || defined(CONFIG_R9A07G054L) || \
+	defined(CONFIG_R9A07G043U) || defined(CONFIG_RZF_DEV) || defined(CONFIG_R9A08G045S)
+	if (phy->speed == 10)
+		writel(0, eth->iobase + RAVB_REG_GECMR);
+	else if (phy->speed == 100)
+		writel(0x10, eth->iobase + RAVB_REG_GECMR);
+	else if (phy->speed == 1000)
+		writel(0x20, eth->iobase + RAVB_REG_GECMR);
+#else
+	if (phy->speed == 100)
+		writel(0, eth->iobase + RAVB_REG_GECMR);
+	else if (phy->speed == 1000)
+		writel(1, eth->iobase + RAVB_REG_GECMR);
+
+	/* Check if full duplex mode is supported by the phy */
+	if (phy->duplex)
+		mask |= ECMR_DM;
+
+	writel(mask, eth->iobase + RAVB_REG_ECMR);
+
+#endif
 
 	device_ops->config(dev);
 	return 0;
@@ -537,7 +603,10 @@ static void ravb_config_rcar(struct udevice *dev)
 {
 	struct ravb_priv *eth = dev_get_priv(dev);
 	struct phy_device *phy = eth->phydev;
+
+#if defined(CONFIG_RZG2L)
 	u32 mask = ECMR_CHG_DM | ECMR_RE | ECMR_TE;
+#endif
 
 	/* Set the transfer speed */
 	if (phy->speed == 100)
@@ -604,7 +673,7 @@ static int ravb_bb_mdio_active(struct mii_dev *miidev)
 {
 	struct ravb_priv *eth = miidev->priv;
 
-	setbits_le32(eth->iobase + RAVB_REG_PIR, PIR_MMD);
+	setbits_le32(eth->mdiobase + RAVB_REG_PIR, PIR_MMD);
 
 	return 0;
 }
@@ -613,7 +682,7 @@ static int ravb_bb_mdio_tristate(struct mii_dev *miidev)
 {
 	struct ravb_priv *eth = miidev->priv;
 
-	clrbits_le32(eth->iobase + RAVB_REG_PIR, PIR_MMD);
+	clrbits_le32(eth->mdiobase + RAVB_REG_PIR, PIR_MMD);
 
 	return 0;
 }
@@ -623,9 +692,9 @@ static int ravb_bb_set_mdio(struct mii_dev *miidev, int v)
 	struct ravb_priv *eth = miidev->priv;
 
 	if (v)
-		setbits_le32(eth->iobase + RAVB_REG_PIR, PIR_MDO);
+		setbits_le32(eth->mdiobase + RAVB_REG_PIR, PIR_MDO);
 	else
-		clrbits_le32(eth->iobase + RAVB_REG_PIR, PIR_MDO);
+		clrbits_le32(eth->mdiobase + RAVB_REG_PIR, PIR_MDO);
 
 	return 0;
 }
@@ -634,7 +703,7 @@ static int ravb_bb_get_mdio(struct mii_dev *miidev, int *v)
 {
 	struct ravb_priv *eth = miidev->priv;
 
-	*v = (readl(eth->iobase + RAVB_REG_PIR) & PIR_MDI) >> 3;
+	*v = (readl(eth->mdiobase + RAVB_REG_PIR) & PIR_MDI) >> 3;
 
 	return 0;
 }
@@ -644,9 +713,9 @@ static int ravb_bb_set_mdc(struct mii_dev *miidev, int v)
 	struct ravb_priv *eth = miidev->priv;
 
 	if (v)
-		setbits_le32(eth->iobase + RAVB_REG_PIR, PIR_MDC);
+		setbits_le32(eth->mdiobase + RAVB_REG_PIR, PIR_MDC);
 	else
-		clrbits_le32(eth->iobase + RAVB_REG_PIR, PIR_MDC);
+		clrbits_le32(eth->mdiobase + RAVB_REG_PIR, PIR_MDC);
 
 	return 0;
 }
@@ -689,12 +758,25 @@ static int ravb_probe(struct udevice *dev)
 	struct ravb_priv *eth = dev_get_priv(dev);
 	struct mii_dev *mdiodev;
 	void __iomem *iobase;
+	u32 alt_mdio_base;
 	int ret;
 
 	iobase = map_physmem(pdata->iobase, 0x1000, MAP_NOCACHE);
 	eth->iobase = iobase;
+	eth->mdiobase = iobase;
 
-	ret = clk_get_bulk(dev, &eth->clks);
+	/*
+	* Some boards route MDC/MDIO pins only to one MAC (shared MDIO bus).
+	* Allow a MAC to bitbang MDIO via an alternate register base.
+	*/
+	if (!dev_read_u32(dev, "alt-mdio-base", &alt_mdio_base)) {
+			eth->mdiobase = map_physmem((phys_addr_t)alt_mdio_base,
+										0x1000, MAP_NOCACHE);
+			if (!eth->mdiobase)
+					eth->mdiobase = eth->iobase;
+	}
+
+	ret = clk_get_by_index(dev, 0, &eth->clk);
 	if (ret < 0)
 		goto err_clk_get;
 
@@ -715,10 +797,12 @@ static int ravb_probe(struct udevice *dev)
 
 	eth->bus = mdiodev;
 
+#if !(defined(CONFIG_RZ_V2M))
 	/* Bring up PHY */
-	ret = clk_enable_bulk(&eth->clks);
+	ret = clk_enable(&eth->clk);
 	if (ret)
 		goto err_clk_enable;
+#endif
 
 	if (device_ops->has_reset) {
 		ret = reset_get_by_index(dev, 0, &eth->rst);
@@ -751,9 +835,11 @@ err_clk_enable:
 err_mdio_register:
 	mdio_free(mdiodev);
 err_mdio_alloc:
-	clk_release_bulk(&eth->clks);
+	clk_disable(&eth->clk);
 err_clk_get:
 	unmap_physmem(eth->iobase, MAP_NOCACHE);
+	if (eth->mdiobase && eth->mdiobase != eth->iobase)
+		unmap_physmem(eth->mdiobase, MAP_NOCACHE);
 	return ret;
 }
 
@@ -767,12 +853,14 @@ static int ravb_remove(struct udevice *dev)
 		reset_assert(&eth->rst);
 		reset_free(&eth->rst);
 	}
-	clk_release_bulk(&eth->clks);
+	clk_disable(&eth->clk);
 
 	free(eth->phydev);
 	mdio_unregister(eth->bus);
 	mdio_free(eth->bus);
 	unmap_physmem(eth->iobase, MAP_NOCACHE);
+	if (eth->mdiobase && eth->mdiobase != eth->iobase)
+		unmap_physmem(eth->mdiobase, MAP_NOCACHE);
 
 	return 0;
 }
