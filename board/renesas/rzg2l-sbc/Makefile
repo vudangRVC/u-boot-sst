@@ -9,5 +9,5 @@
 ifdef CONFIG_SPL_BUILD
 obj-y	:= gen3-spl.o
 else
-obj-y	:= rzpi.o common.o
+obj-y	:= rzg2l-sbc.o common.o
 endif
