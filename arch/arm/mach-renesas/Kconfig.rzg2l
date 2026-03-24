@@ -19,7 +19,7 @@ config TARGET_RZG2L_SMARC_EVK
 	help
 	  Enable support for the RZ/G2L SMARC evaluation board.
 
-config TARGET_RZPI
+config TARGET_RZG2L_SBC
 	bool "RZ/G2L SBC board"
 	help
 	  Support for Renesas RZG2L Raspberry-Pi-like board
@@ -30,9 +30,9 @@ source "board/renesas/rzg2l/Kconfig"
 source "board/renesas/rzg2l-sbc/Kconfig"
 
 config MULTI_DTB_FIT_UNCOMPRESS_SZ
-	default 0x80000 if TARGET_RZG2L_SMARC_EVK || TARGET_RZPI
+	default 0x80000 if TARGET_RZG2L_SMARC_EVK || TARGET_RZG2L_SBC
 
 config MULTI_DTB_FIT_USER_DEF_ADDR
-	default 0x49000000 if TARGET_RZG2L_SMARC_EVK || TARGET_RZPI
+	default 0x49000000 if TARGET_RZG2L_SMARC_EVK || TARGET_RZG2L_SBC
 
 endif
