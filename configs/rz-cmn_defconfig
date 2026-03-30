@@ -11,7 +11,7 @@ CONFIG_R9A07Gx=y
 CONFIG_RZ_CMN=y
 CONFIG_TARGET_RZ_CMN=y
 CONFIG_DEFAULT_DEVICE_TREE="renesas/rzg2l-sbc"
-CONFIG_OF_LIST="renesas/rzg2l-sbc renesas/r9a07g044l2-smarc"
+CONFIG_OF_LIST="renesas/rzg2l-sbc renesas/smarc-rzg2l"
 CONFIG_SMBIOS_PRODUCT_NAME=""
 # CONFIG_SPL is not set
 CONFIG_OF_UPSTREAM is not set

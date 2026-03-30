@@ -26,7 +26,7 @@ int board_fit_config_name_match(const char *name)
 		return -1;
 
 	if (is_rzg2l_board("renesas,r9a07g044l2"))
-		return strcmp(name, "r9a07g044l2-smarc");
+		return strcmp(name, "smarc-rzg2l");
 
 	return -1;
 }
