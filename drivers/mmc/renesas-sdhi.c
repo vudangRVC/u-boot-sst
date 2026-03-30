@@ -3,6 +3,8 @@
  * Copyright (C) 2018 Marek Vasut <marek.vasut@gmail.com>
  */
 
+#define DEBUG
+
 #include <bouncebuf.h>
 #include <clk.h>
 #include <fdtdec.h>
@@ -416,7 +418,7 @@ static int renesas_sdhi_hs400(struct udevice *dev)
 
 		if (priv->hs400_bad_tap & BIT(new_tap)) {
 			new_tap = priv->tap_set;
-			debug("Three consecutive bad tap is prohibited\n");
+			printf("Three consecutive bad tap is prohibited\n");
 		}
 
 		priv->tap_set = new_tap;
@@ -711,20 +713,20 @@ static int renesas_sdhi_addr_aligned_gen(uintptr_t ubuf,
 {
 	/* Check if start is aligned */
 	if (!IS_ALIGNED(ubuf, RENESAS_SDHI_DMA_ALIGNMENT)) {
-		debug("Unaligned buffer address %lx\n", ubuf);
+		printf("Unaligned buffer address %lx\n", ubuf);
 		return 0;
 	}
 
 	/* Check if length is aligned */
 	if (len != len_aligned) {
-		debug("Unaligned buffer length %zu\n", len);
+		printf("Unaligned buffer length %zu\n", len);
 		return 0;
 	}
 
 #ifdef CONFIG_PHYS_64BIT
 	/* Check if below 32bit boundary */
 	if ((ubuf >> 32) || (ubuf + len_aligned) >> 32) {
-		debug("Buffer above 32bit boundary %lx-%lx\n",
+		printf("Buffer above 32bit boundary %lx-%lx\n",
 			ubuf, ubuf + len_aligned);
 		return 0;
 	}
@@ -971,143 +973,196 @@ static void renesas_sdhi_filter_caps(struct udevice *dev)
 
 static int rzg2l_sdhi_setup(struct udevice *dev)
 {
-	struct tmio_sd_priv *priv = dev_get_priv(dev);
-	struct clk imclk2, aclk;
-	struct reset_ctl rst;
-	int ret;
+    struct tmio_sd_priv *priv = dev_get_priv(dev);
+    struct clk imclk2, aclk;
+    struct reset_ctl rst;
+    int ret;
 
-	/*
-	 * On members of the RZ/G2L SoC family, we need to enable
-	 * additional chip detect and bus clocks, then release the SDHI
-	 * module from reset.
-	 */
-	ret = clk_get_by_name(dev, "cd", &imclk2);
-	if (ret < 0) {
-		dev_err(dev, "failed to get imclk2 (chip detect clk)\n");
-		return ret;
-	}
+    printf("=== %s: Starting RZ/G2L SDHI setup ===\n", __func__);
 
-	ret = clk_get_by_name(dev, "aclk", &aclk);
-	if (ret < 0) {
-		dev_err(dev, "failed to get aclk\n");
-		return ret;
-	}
+    /*
+     * On members of the RZ/G2L SoC family, we need to enable
+     * additional chip detect and bus clocks, then release the SDHI
+     * module from reset.
+     */
+    printf("%s: Getting chip detect clock (cd)\n", __func__);
+    ret = clk_get_by_name(dev, "cd", &imclk2);
+    if (ret < 0) {
+        dev_err(dev, "failed to get imclk2 (chip detect clk), ret=%d\n", ret);
+        return ret;
+    }
+    printf("%s: Chip detect clock obtained\n", __func__);
 
-	ret = clk_enable(&imclk2);
-	if (ret < 0) {
-		dev_err(dev, "failed to enable imclk2 (chip detect clk)\n");
-		return ret;
-	}
+    printf("%s: Getting bus clock (aclk)\n", __func__);
+    ret = clk_get_by_name(dev, "aclk", &aclk);
+    if (ret < 0) {
+        dev_err(dev, "failed to get aclk, ret=%d\n", ret);
+        return ret;
+    }
+    printf("%s: Bus clock obtained\n", __func__);
 
-	ret = clk_enable(&aclk);
-	if (ret < 0) {
-		dev_err(dev, "failed to enable aclk\n");
-		goto err_aclk;
-	}
+    printf("%s: Enabling chip detect clock\n", __func__);
+    ret = clk_enable(&imclk2);
+    if (ret < 0) {
+        dev_err(dev, "failed to enable imclk2 (chip detect clk), ret=%d\n", ret);
+        return ret;
+    }
+    printf("%s: Chip detect clock enabled, rate=%lu Hz\n", 
+          __func__, clk_get_rate(&imclk2));
 
-	ret = reset_get_by_index(dev, 0, &rst);
-	if (ret < 0) {
-		dev_err(dev, "failed to get reset line\n");
-		goto err_get_reset;
-	}
+    printf("%s: Enabling bus clock\n", __func__);
+    ret = clk_enable(&aclk);
+    if (ret < 0) {
+        dev_err(dev, "failed to enable aclk, ret=%d\n", ret);
+        goto err_aclk;
+    }
+    printf("%s: Bus clock enabled, rate=%lu Hz\n", 
+          __func__, clk_get_rate(&aclk));
 
-	ret = reset_deassert(&rst);
-	if (ret < 0) {
-		dev_err(dev, "failed to de-assert reset line\n");
-		goto err_reset;
-	}
+    printf("%s: Getting reset line\n", __func__);
+    ret = reset_get_by_index(dev, 0, &rst);
+    if (ret < 0) {
+        dev_err(dev, "failed to get reset line, ret=%d\n", ret);
+        goto err_get_reset;
+    }
 
-	ret = tmio_sd_probe(dev, priv->quirks);
-	if (ret)
-		goto err_tmio_probe;
+    printf("%s: De-asserting reset line\n", __func__);
+    ret = reset_deassert(&rst);
+    if (ret < 0) {
+        dev_err(dev, "failed to de-assert reset line, ret=%d\n", ret);
+        goto err_reset;
+    }
+    printf("%s: Reset line de-asserted\n", __func__);
 
-	return 0;
+    printf("%s: Calling tmio_sd_probe() with quirks=0x%lx\n", 
+          __func__, priv->quirks);
+    ret = tmio_sd_probe(dev, priv->quirks);
+    if (ret) {
+        dev_err(dev, "tmio_sd_probe failed, ret=%d\n", ret);
+        goto err_tmio_probe;
+    }
+
+    printf("=== %s: RZ/G2L SDHI setup completed successfully ===\n", __func__);
+    return 0;
 
 err_tmio_probe:
-	reset_assert(&rst);
+    printf("%s: Error - re-asserting reset\n", __func__);
+    reset_assert(&rst);
 err_reset:
-	reset_free(&rst);
+    printf("%s: Error - freeing reset\n", __func__);
+    reset_free(&rst);
 err_get_reset:
-	clk_disable(&aclk);
+    printf("%s: Error - disabling bus clock\n", __func__);
+    clk_disable(&aclk);
 err_aclk:
-	clk_disable(&imclk2);
-	return ret;
+    printf("%s: Error - disabling chip detect clock\n", __func__);
+    clk_disable(&imclk2);
+    return ret;
 }
 
 static int renesas_sdhi_probe(struct udevice *dev)
 {
-	struct tmio_sd_priv *priv = dev_get_priv(dev);
-	struct fdt_resource reg_res;
-	DECLARE_GLOBAL_DATA_PTR;
-	int ret;
+    struct tmio_sd_priv *priv = dev_get_priv(dev);
+    struct fdt_resource reg_res;
+    DECLARE_GLOBAL_DATA_PTR;
+    int ret;
 
-	priv->clk_get_rate = renesas_sdhi_clk_get_rate;
+    printf("=== %s: Starting probe for device %s ===\n", __func__, dev->name);
 
-	priv->quirks = dev_get_driver_data(dev);
-	if (priv->quirks == RENESAS_GEN2_QUIRKS) {
-		ret = fdt_get_resource(gd->fdt_blob, dev_of_offset(dev),
-				       "reg", 0, &reg_res);
-		if (ret < 0) {
-			dev_err(dev, "\"reg\" resource not found, ret=%i\n",
-				ret);
-			return ret;
-		}
+    priv->clk_get_rate = renesas_sdhi_clk_get_rate;
+    priv->quirks = dev_get_driver_data(dev);
 
-		if (fdt_resource_size(&reg_res) == 0x100)
-			priv->quirks |= TMIO_SD_CAP_16BIT;
-	}
+    printf("%s: quirks = 0x%lx\n", __func__, priv->quirks);
 
-	ret = clk_get_by_index(dev, 0, &priv->clk);
-	if (ret < 0) {
-		dev_err(dev, "failed to get host clock\n");
-		return ret;
-	}
+    if (priv->quirks == RENESAS_GEN2_QUIRKS) {
+        ret = fdt_get_resource(gd->fdt_blob, dev_of_offset(dev),
+                       "reg", 0, &reg_res);
+        if (ret < 0) {
+            dev_err(dev, "\"reg\" resource not found, ret=%i\n",
+                ret);
+            return ret;
+        }
+        if (fdt_resource_size(&reg_res) == 0x100)
+            priv->quirks |= TMIO_SD_CAP_16BIT;
+    }
 
-	/* optional SDnH clock */
-	ret = clk_get_by_name(dev, "clkh", &priv->clkh);
-	if (ret < 0) {
-		dev_dbg(dev, "failed to get clkh\n");
-	} else {
-		ret = clk_set_rate(&priv->clkh, 800000000);
-		if (ret < 0) {
-			dev_err(dev, "failed to set rate for SDnH clock (%d)\n", ret);
-			return ret;
-		}
-	}
+    printf("%s: Getting SDn clock (clk index 0)\n", __func__);
+    ret = clk_get_by_index(dev, 0, &priv->clk);
+    if (ret < 0) {
+        dev_err(dev, "failed to get host clock, ret=%d\n", ret);
+        return ret;
+    }
+    printf("%s: SDn clock obtained successfully\n", __func__);
 
-	/* set to max rate */
-	ret = clk_set_rate(&priv->clk, 200000000);
-	if (ret < 0) {
-		dev_err(dev, "failed to set rate for SDn clock (%d)\n", ret);
-		return ret;
-	}
+    /* optional SDnH clock */
+    printf("%s: Attempting to get SDnH clock (clkh)\n", __func__);
+    ret = clk_get_by_name(dev, "clkh", &priv->clkh);
+    if (ret < 0) {
+        printf("%s: SDnH clock not available (ret=%d), continuing without it\n", 
+              __func__, ret);
+    } else {
+        printf("%s: SDnH clock obtained, setting rate to 800MHz\n", __func__);
+        ret = clk_set_rate(&priv->clkh, 800000000);
+        if (ret < 0) {
+            dev_err(dev, "failed to set rate for SDnH clock, ret=%d\n", ret);
+            return ret;
+        }
+        printf("%s: SDnH clock rate set successfully to %lu Hz\n", 
+              __func__, clk_get_rate(&priv->clkh));
+    }
 
-	ret = clk_enable(&priv->clk);
-	if (ret) {
-		dev_err(dev, "failed to enable SDn clock (%d)\n", ret);
-		return ret;
-	}
+    /* set to max rate */
+    printf("%s: Setting SDn clock rate to 200MHz\n", __func__);
+    ret = clk_set_rate(&priv->clk, 200000000);
+    if (ret < 0) {
+        dev_err(dev, "failed to set rate for SDn clock, ret=%d\n", ret);
+        return ret;
+    }
+    printf("%s: SDn clock rate set successfully to %lu Hz\n", 
+          __func__, clk_get_rate(&priv->clk));
 
-	if (device_is_compatible(dev, "renesas,sdhi-r9a07g044"))
-		ret = rzg2l_sdhi_setup(dev);
-	else
-		ret = tmio_sd_probe(dev, priv->quirks);
-	if (ret)
-		goto err_tmio_probe;
+    printf("%s: Enabling SDn clock\n", __func__);
+    ret = clk_enable(&priv->clk);
+    if (ret) {
+        dev_err(dev, "failed to enable SDn clock, ret=%d\n", ret);
+        return ret;
+    }
+    printf("%s: SDn clock enabled successfully\n", __func__);
 
-	renesas_sdhi_filter_caps(dev);
+    printf("%s: Checking device compatibility\n", __func__);
+    if (device_is_compatible(dev, "renesas,sdhi-r9a07g044")) {
+        printf("%s: Device is RZ/G2L compatible, calling rzg2l_sdhi_setup()\n", 
+              __func__);
+        ret = rzg2l_sdhi_setup(dev);
+    } else {
+        printf("%s: Device is not RZ/G2L, calling tmio_sd_probe()\n", __func__);
+        ret = tmio_sd_probe(dev, priv->quirks);
+    }
+
+    if (ret) {
+        dev_err(dev, "probe failed, ret=%d\n", ret);
+        goto err_tmio_probe;
+    }
+
+    printf("%s: Calling renesas_sdhi_filter_caps()\n", __func__);
+    renesas_sdhi_filter_caps(dev);
 
 #if CONFIG_IS_ENABLED(MMC_UHS_SUPPORT) || \
     CONFIG_IS_ENABLED(MMC_HS200_SUPPORT) || \
     CONFIG_IS_ENABLED(MMC_HS400_SUPPORT)
-	if (priv->caps & TMIO_SD_CAP_RCAR_UHS)
-		renesas_sdhi_reset_tuning(priv, true);
+    if (priv->caps & TMIO_SD_CAP_RCAR_UHS) {
+        printf("%s: Resetting tuning for UHS support\n", __func__);
+        renesas_sdhi_reset_tuning(priv, true);
+    }
 #endif
-	return 0;
+
+    printf("=== %s: Probe completed successfully ===\n", __func__);
+    return 0;
 
 err_tmio_probe:
-	clk_disable(&priv->clk);
-	return ret;
+    printf("%s: Error path - disabling SDn clock\n", __func__);
+    clk_disable(&priv->clk);
+    return ret;
 }
 
 U_BOOT_DRIVER(renesas_sdhi) = {

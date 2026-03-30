@@ -6,4 +6,4 @@
 # SPDX-License-Identifier: GPL-2.0+
 #
 
-obj-y	:= rz-cmn.o 
+obj-y	:= rz-cmn.o
