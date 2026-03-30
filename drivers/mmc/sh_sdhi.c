@@ -849,7 +849,7 @@ static int sh_sdhi_dm_probe(struct udevice *dev)
 	if (!host->addr)
 		return -ENOMEM;
 
-	if (board_id != BOARD_ID_RZV2H_EVK) {
+	if (soc_id != RZ_SOC_RZV2H) {
 		ret = clk_get_by_index(dev, 0, &sh_sdhi_clk);
 		if (ret) {
 			debug("failed to get clock, ret=%d\n", ret);

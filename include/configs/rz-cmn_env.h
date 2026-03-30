@@ -53,7 +53,7 @@
 #define RZ_FDT_SELECT_TABLE \
 	RZ_FDT_CASE("rs-g2l100", "1", "0", "rs-g2l100.dtb") \
 	RZ_FDT_CASE("rzg2l-sbc", "1", "0", "rzg2l-sbc.dtb") \
-	RZ_FDT_CASE("smarc-rzg2l", "1", "0", "smarc-rzg2l.dtb") \
+	RZ_FDT_CASE("rzg2l-evk", "1", "0", "rzg2l-evk.dtb") \
 	RZ_FDT_CASE("rzv2l-evk", "1", "0", "rzv2l-evk.dtb") \
 	RZ_FDT_CASE("rzv2h-evk", "1", "0", "rzv2h-evk-ver1.dtb") \
 	RZ_FDT_CASE("rzv2h-evk", "2", "0", "rzv2h-evk-ver1.dtb") \
