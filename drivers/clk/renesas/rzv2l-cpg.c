@@ -106,7 +106,7 @@ int rzv2l_clk_probe(struct udevice *dev)
 	if (!priv->base)
 		return -EINVAL;
 
-	ret = clk_get_by_name(dev, "xinclk", &priv->clk_extal);
+	ret = clk_get_by_name(dev, "extal_clk", &priv->clk_extal);
 	if (ret < 0)
 		return ret;
 

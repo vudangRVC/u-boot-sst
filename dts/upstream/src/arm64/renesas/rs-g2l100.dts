@@ -8,7 +8,7 @@
 
 /dts-v1/;
 #include <dt-bindings/gpio/gpio.h>
-#include "r9a07g044l.dtsi"
+#include "r9a07g044.dtsi"
 #include "r9a07g044l-u-boot.dtsi"
 #include <dt-bindings/pinctrl/rzg2l-pinctrl.h>
 #include <configs/rzg2l-sbc.h>
@@ -18,7 +18,7 @@
 	compatible = "renesas,r9a07g044l", "renesas,rzg2l";
 
 	aliases	{
-		spi0 = &spibsc;
+		spi0 = &sbc;
 		serial0 = &scif0;
 	};
 
@@ -79,7 +79,7 @@
 	};
 };
 
-&xinclk {
+&extal_clk {
 	clock-frequency = <24000000>;
 };
 
@@ -115,7 +115,7 @@
 	status = "okay";
 };
 
-&spibsc {
+&sbc {
 	status = "okay";
 	compatible = "renesas,rpc-r8a77995";
 	num-cs = <2>;
