@@ -3,12 +3,11 @@
  * Renesas RZ/V2L CLK driver
  *
  * Copyright (C) 2021 Renesas Electronics Corp.
- * 
+ *
  * Based on the following driver from Linux kernel:
- * r8a774a1 Clock Pulse Generator / Module Standby and Software Reset 
+ * r8a774a1 Clock Pulse Generator / Module Standby and Software Reset
  */
 
-//#include <common.h>
 #include <clk-uclass.h>
 #include <dm.h>
 #include <errno.h>
@@ -46,19 +45,19 @@ static int rzv2l_clk_enable(struct clk *clk)
 	const struct mssr_mod_clk *clock;
 	uint32_t value=0;
 	int ret=0;
-	
+
 	if (!is_mod_clk(clk)) {
 		debug("CLK: not a module clock \n");
 		return -1;
 	}
-	
+
 	/* Set write_mask bit, set clk enable, then check monitor status */
 	mod_clk_get(clk, priv->info, &clock);
 	value = (MSSR_ON(clock->bit) << 16) | MSSR_ON(clock->bit);
 	setbits_le32(priv->base + CLK_ON_R(MSSR_OFF(clock->bit) * 4), value);
 	ret = wait_for_bit_le32(priv->base + CLK_MON_R(MSSR_OFF(clock->bit) * 4),
 					MSSR_ON(clock->bit), 1, 100, 0);
-	
+
 	return ret;
 }
 
@@ -73,7 +72,7 @@ static int rzv2l_clk_disable(struct clk *clk)
 		debug("CLK: not a module clock \n");
 		return -1;
 	}
-	
+
 	mod_clk_get(clk, priv->info, &clock);
 	value = MSSR_ON(clock->bit) << 16;
 	iowrite32(value, priv->base + 0x500 + MSSR_OFF(clock->bit) * 4);
@@ -85,7 +84,7 @@ static int rzv2l_clk_disable(struct clk *clk)
 
 static ulong rzv2l_clk_set_rate(struct clk *clk, ulong rate)
 {
-	
+
 	return 0;
 }
 
@@ -100,13 +99,13 @@ int rzv2l_clk_probe(struct udevice *dev)
 	struct rzv2l_clk_priv *priv = dev_get_priv(dev);
 	struct cpg_mssr_info *info =
 		(struct cpg_mssr_info *)dev_get_driver_data(dev);
-	
+
 	priv->info = info;
 	priv->base = dev_read_addr_ptr(dev);
 	if (!priv->base)
 		return -EINVAL;
 
-	ret = clk_get_by_name(dev, "extal_clk", &priv->clk_extal);
+	ret = clk_get_by_name(dev, "xinclk", &priv->clk_extal);
 	if (ret < 0)
 		return ret;
 
@@ -136,4 +135,5 @@ const struct clk_ops rzv2l_clk_ops = {
 	.enable		= rzv2l_clk_enable,
 	.disable	= rzv2l_clk_disable,
 	.of_xlate	= rzv2l_clk_of_xlate,
+	.set_rate = rzv2l_clk_set_rate,
 };
