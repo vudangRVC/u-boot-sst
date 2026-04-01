@@ -806,12 +806,14 @@ static int ravb_probe(struct udevice *dev)
 
 	if (device_ops->has_reset) {
 		ret = reset_get_by_index(dev, 0, &eth->rst);
-		if (ret < 0)
-			goto err_clk_enable;
-
-		ret = reset_deassert(&eth->rst);
-		if (ret < 0)
-			goto err_reset_deassert;
+		if (ret < 0) {
+			printf("Reset controller not available, skipping reset\n");
+			device_ops->has_reset = false;
+		} else {
+			ret = reset_deassert(&eth->rst);
+			if (ret < 0)
+				goto err_reset_deassert;
+		}
 	}
 
 	ret = ravb_reset(dev);
