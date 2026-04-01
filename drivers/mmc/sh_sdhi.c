@@ -33,10 +33,10 @@
 #include <clk.h>
 
 #define DRIVER_NAME "sh-sdhi"
-#define SDHI_WRITE_TIMEOUT		100000
+#define SDHI_WRITE_TIMEOUT	100000
 #define SDHI_INTERRUPT_TIMEOUT	10000000
 
-extern u64 board_id;
+extern u64 soc_id;
 
 struct sh_sdhi_host {
 	void __iomem *addr;
@@ -211,9 +211,6 @@ static int sh_sdhi_clock_control(struct sh_sdhi_host *host, unsigned long clk)
 		if ((sh_sdhi_readw(host, SDHI_INFO2) & 0x2000))
 			break;
 	}
-
-	sh_sdhi_writew(host, SDHI_INFO1, 0);  // Clear INFO1 full
-	sh_sdhi_writew(host, SDHI_INFO2, 0);  // Clear INFO2 full
 
 	if (timeout)
 		sh_sdhi_writew(host, SDHI_CLK_CTRL,
@@ -602,6 +599,9 @@ static int sh_sdhi_start_cmd(struct sh_sdhi_host *host,
 			break;
 	}
 
+	sh_sdhi_writew(host, SDHI_INFO1, 0);  // Clear INFO1 full
+	sh_sdhi_writew(host, SDHI_INFO2, 0);  // Clear INFO2 full
+
 	host->wait_int = 0;
 	sh_sdhi_writew(host, SDHI_INFO1_MASK,
 		       ~INFO1M_RESP_END & sh_sdhi_readw(host, SDHI_INFO1_MASK));
@@ -612,12 +612,14 @@ static int sh_sdhi_start_cmd(struct sh_sdhi_host *host,
 		       sh_sdhi_readw(host, SDHI_INFO2_MASK));
 
 	sh_sdhi_writew(host, SDHI_CMD, (unsigned short)(shcmd & CMD_MASK));
+
 	timeout = SDHI_WRITE_TIMEOUT;
 	while (timeout--) {
 		if (sh_sdhi_readw(host, SDHI_INFO1) & INFO1_RESP_END)
 			break;
 		udelay(1);  // Delay 1us
 	}
+
 	if (!timeout) return -ETIMEDOUT;
 
 	time = sh_sdhi_wait_interrupt_flag(host);
@@ -660,8 +662,8 @@ static int sh_sdhi_start_cmd(struct sh_sdhi_host *host,
 		ret = sh_sdhi_data_trans(host, data, opc);
 
 	debug("ret = %d, resp = %08x, %08x, %08x, %08x\n",
-			ret, cmd->response[0], cmd->response[1],
-			cmd->response[2], cmd->response[3]);
+	      ret, cmd->response[0], cmd->response[1],
+	      cmd->response[2], cmd->response[3]);
 
 	timeout = SDHI_WRITE_TIMEOUT;
 	while (timeout--) {
@@ -893,7 +895,6 @@ static int sh_sdhi_dm_probe(struct udevice *dev)
 	plat->cfg.name = dev->name;
 	plat->cfg.host_caps = MMC_MODE_HS_52MHz | MMC_MODE_HS;
 
-
 	if (fdtdec_get_bool(gd->fdt_blob, dev_of_offset(dev),
 				"mutual-channel")) {
 		plat->cfg.host_caps |= MMC_MODE_4BIT | MMC_MODE_8BIT;
@@ -911,6 +912,7 @@ static int sh_sdhi_dm_probe(struct udevice *dev)
 		default:
 			dev_err(dev, "Invalid \"bus-width\" value\n");
 			return -EINVAL;
+		}
 	}
 
 	sh_sdhi_initialize_common(host);
