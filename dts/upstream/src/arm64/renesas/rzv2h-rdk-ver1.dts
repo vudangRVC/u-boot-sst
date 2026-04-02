@@ -16,7 +16,7 @@
 	compatible = "renesas,r9a09g057h4-dev", "renesas,r9a09g057h4", "renesas,r9a09g057";
 
 	aliases {
-		serial0 = &scif;
+		serial0 = &scif0;
 		mmc0 = &sdhi0;
 		i2c3 = &i2c3;
 		i2c6 = &i2c6;
@@ -83,11 +83,11 @@
 	};
 };
 
-&qextal_clk {
+&extal_clk {
 	clock-frequency = <24000000>;
 };
 
-&scif {
+&scif0 {
 	status = "okay";
 };
 
