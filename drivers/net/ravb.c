@@ -77,7 +77,6 @@
 
 /* TOE Registers */
 #define CSR0			0x800
-#define CSR0_RPE		0x00000020
 
 #define ECMR_TRCCM		BIT(26)
 #define ECMR_RCPT		BIT(25)
