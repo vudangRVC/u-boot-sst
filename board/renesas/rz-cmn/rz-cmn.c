@@ -603,7 +603,7 @@ static void s_init_rzg2l(void)
 
 static void s_init_rzg2l_sbc(void)
 {
-	/* can go in board_eht_init() once enabled */
+	/* can go in board_eth_init() once enabled */
 	*(volatile u32 *)(RZG2L_ETH_CH0) = (*(volatile u32 *)(RZG2L_ETH_CH0) & 0xFFFFFFFC) | RZG2L_ETH_PVDD_1800;
 	*(volatile u32 *)(RZG2L_ETH_CH1) = (*(volatile u32 *)(RZG2L_ETH_CH1) & 0xFFFFFFFC) | RZG2L_ETH_PVDD_1800;
 	/* Enable RGMII for both ETH{0,1} */
@@ -888,6 +888,7 @@ static void configure_gpy111_phys(void)
 	unsigned int i;
 	unsigned short data;
 
+	printf("Configuring GPHY111 PHYs for RGMII delay...\n");
 	list_for_each(entry, mdio_get_list_head()) {
 		dev = list_entry(entry, struct mii_dev, link);
 
@@ -943,14 +944,40 @@ static void setup_pins(void)
 	prt[PFC_P10]  = (prt[PFC_P10]  & 0xFE) | 0x01; /* Set high. */
 }
 
+int rzv2h_board_pmic_i2c_init(void)
+{
+	struct udevice *dev;
+	const u8 pmic_i2c_bus = 8;
+	u8 reg;
+	int ret;
 
+	ret = i2c_get_chip_for_busnum(pmic_i2c_bus, 0x12, 1, &dev);
+
+	if (!ret)
+	{
+		dm_i2c_read(dev, 0x3c, &reg, 1);
+		reg &= (~0x01);
+
+		dm_i2c_write(dev, 0x3c, &reg, 1);
+
+		udelay(2);
+		reg |= (0x01);
+
+		dm_i2c_write(dev, 0x3c, &reg, 1);
+	}
+
+	return ret;
+}
 int board_late_init(void)
 {
+	printf("Board late init: board_id=%u, soc_id=%llu\n", (unsigned int)board_id, soc_id);
+
 	if(board_id == BOARD_ID_RZG2L_SBC)
 	{
 		uchar enetaddrs[ETH_ALEN * 2];
 		struct udevice *bus, *chip;
 
+		printf("Reading MAC addresses from EEPROM...\n");
 		if (!uclass_get_device_by_seq(UCLASS_I2C, 0, &bus) &&
 			!i2c_get_chip(bus, 0x54, 1, &chip) &&
 			!i2c_set_chip_offset_len(chip, 1))
@@ -965,6 +992,13 @@ int board_late_init(void)
 		}
 
 		setup_pins();
+	} else if (soc_id == RZ_SOC_RZV2H) {
+		int ret = rzv2h_board_pmic_i2c_init();
+		if (ret)
+			printf("Failed to initialize PMIC via I2C: %d\n", ret);
+	}
+	else {
+		printf("No board-specific late init required\n");
 	}
 #ifdef CONFIG_RENESAS_RZG2LWDT
 	rzg2l_reinitr_wdt();
