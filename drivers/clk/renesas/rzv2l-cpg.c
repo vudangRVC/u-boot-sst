@@ -25,7 +25,7 @@
 #include <reset.h>
 #include <wait_bit.h>
 
-#include "rzg2l-cpg.h"
+#include "rzv2l-cpg.h"
 
 /*
  * Monitor registers for both clock and reset signals are offset by 0x180 from
