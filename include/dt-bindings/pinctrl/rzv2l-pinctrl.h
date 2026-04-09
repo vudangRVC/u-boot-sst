@@ -9,10 +9,9 @@
 #define RZV2L_PINS_PER_PORT	8
 
 /*
- * Store the pin index from its port and position number in bits[11-0].
- * And store its peripheral function mode identifier in 3 bits [14-12]
+ * Create the pin index from its bank and position numbers and store in
+ * the upper 16 bits the alternate function identifier
  */
-#define RZV2L_PINMUX(port, pos, func)	\
-	(((port) * RZV2L_PINS_PER_PORT + (pos)) | ((func) << 12))
+#define RZV2L_PINMUX(b, p, f)	((b) * RZV2L_PINS_PER_PORT + (p) | ((f) << 16))
 
 #endif /* __DT_BINDINGS_RZV2L_PINCTRL_H */
