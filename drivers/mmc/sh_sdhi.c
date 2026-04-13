@@ -9,7 +9,6 @@
  * Copyright (C) 2008-2009 Renesas Solutions Corp.
  */
 
-// #include <common.h>
 #include <log.h>
 #include <malloc.h>
 #include <mmc.h>

@@ -7,7 +7,7 @@
  * SPDX-License-Identifier:     GPL-2.0+
  */
 
-#include <common.h>
+
 #include <errno.h>
 #include <asm/io.h>
 #include <usb.h>
@@ -75,4 +75,3 @@ int usbhs_lowlevel_init(int index, enum usb_init_type init)
 
 	return 0;
 }
-
