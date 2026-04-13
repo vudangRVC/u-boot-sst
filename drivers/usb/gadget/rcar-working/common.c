@@ -475,11 +475,13 @@ int usbhs_probe(struct platform_device *pdev)
 	if (!priv)
 		return -ENOMEM;
 
+	printf("soc_id = 0x%llx\n", soc_id);
+	/* set base address */
 	if (soc_id == RZ_SOC_RZV2H)
-		priv->base = (void *)RZV2H_USBHS_BASE;
+		priv->base = (void *)RZV2H_PHY_BASE;
 
 	if (soc_id == RZ_SOC_RZG2L || soc_id == RZ_SOC_RZV2L)
-		priv->base = (void *)RZG2L_USBHS_BASE;
+		priv->base = (void *)RZG2L_PHY_BASE;
 
 	if (IS_ERR(priv->base))
 		return PTR_ERR(priv->base);
