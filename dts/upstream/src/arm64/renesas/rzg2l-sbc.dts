@@ -8,7 +8,7 @@
 
 /dts-v1/;
 #include <dt-bindings/gpio/gpio.h>
-#include "r9a07g044l2.dtsi"
+#include "r9a07g044.dtsi"
 #include <dt-bindings/pinctrl/rzg2l-pinctrl.h>
 #include <configs/rzg2l-sbc.h>
 
@@ -16,7 +16,7 @@
 	model = "RZ/G2L-SBC";
 	compatible = "renesas,r9a07g044l", "renesas,rzg2l";
 
-	aliases {
+	aliases	{
 		spi0 = &sbc;
 		serial0 = &scif0;
 	};
@@ -27,7 +27,6 @@
 
 	memory@48000000 {
 		device_type = "memory";
-		/* first 128MB is reserved for secure area. */
 		reg = <0 DDR_BASE_ADDR 0 DDR_AVAILABLE_SIZE>; 
 	};
 };
@@ -64,7 +63,6 @@
 				<RZG2L_PORT_PINMUX(35, 1, 1)>, //RXD2
 				<RZG2L_PORT_PINMUX(36, 0, 1)>; //RXD3
 	};
-
 };
 
 &extal_clk {
@@ -102,7 +100,6 @@
 	status = "okay";
 };
 
-/* Serial bus controller */
 &sbc {
 	status = "okay";
 	compatible = "renesas,rpc-r8a77995";
