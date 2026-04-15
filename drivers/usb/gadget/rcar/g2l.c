@@ -43,4 +43,3 @@ const struct renesas_usbhs_platform_callback usbhs_g2l_ops = {
 	.power_ctrl = usbhs_g2l_power_ctrl,
 	.get_id = usbhs_g2l_get_id,
 };
-
