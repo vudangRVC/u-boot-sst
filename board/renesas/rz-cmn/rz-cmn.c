@@ -889,7 +889,6 @@ static void configure_gpy111_phys(void)
 	unsigned int i;
 	unsigned short data;
 
-	printf("Configuring GPHY111 PHYs for RGMII delay...\n");
 	list_for_each(entry, mdio_get_list_head()) {
 		dev = list_entry(entry, struct mii_dev, link);
 
@@ -971,14 +970,11 @@ int rzv2h_board_pmic_i2c_init(void)
 }
 int board_late_init(void)
 {
-	printf("Board late init: board_id=%u, soc_id=%llu\n", (unsigned int)board_id, soc_id);
-
 	if(board_id == BOARD_ID_RZG2L_SBC)
 	{
 		uchar enetaddrs[ETH_ALEN * 2];
 		struct udevice *bus, *chip;
 
-		printf("Reading MAC addresses from EEPROM...\n");
 		if (!uclass_get_device_by_seq(UCLASS_I2C, 0, &bus) &&
 			!i2c_get_chip(bus, 0x54, 1, &chip) &&
 			!i2c_set_chip_offset_len(chip, 1))
@@ -997,9 +993,6 @@ int board_late_init(void)
 		int ret = rzv2h_board_pmic_i2c_init();
 		if (ret)
 			printf("Failed to initialize PMIC via I2C: %d\n", ret);
-	}
-	else {
-		printf("No board-specific late init required\n");
 	}
 #ifdef CONFIG_RENESAS_RZG2LWDT
 	rzg2l_reinitr_wdt();
@@ -1025,7 +1018,7 @@ int board_late_init(void)
 	return 0;
 }
 
-int last_stage_init(void)
+static int last_stage_init(void)
 {	
 	if(board_id == BOARD_ID_RZG2L_SBC)
 	{
@@ -1035,6 +1028,8 @@ int last_stage_init(void)
 
 	return 0;
 }
+
+EVENT_SPY_SIMPLE(EVT_LAST_STAGE_INIT, last_stage_init);
 
 #ifndef CONFIG_SPL_BUILD
 
