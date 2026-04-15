@@ -65,7 +65,7 @@ int devm_request_irq(struct device *dev, unsigned int irq, irq_handler_t handler
 	if (!pdev)
 		return EINVAL;
 
-	dev_info((struct device *)NULL, "Setting interrupt handler for device %s\n", devname);
+	dev_dbg((struct device *)NULL, "Setting interrupt handler for device %s\n", devname);
 	pdev->irq = handler;
 	pdev->priv = dev_id;
 	return 0;
@@ -149,3 +149,8 @@ int usb_gadget_handle_interrupts(int index)
 	return 0;
 }
 
+int dm_usb_gadget_handle_interrupts(struct udevice *dev)
+{
+	usb_gadget_handle_interrupts(0);
+	return 0;
+}

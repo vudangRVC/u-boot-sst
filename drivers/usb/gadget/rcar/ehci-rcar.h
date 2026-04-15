@@ -92,4 +92,3 @@ struct usb_core_reg {
 int usbhs_lowlevel_init(int index, enum usb_init_type init);
 
 #endif /* __EHCI_RCAR_H__ */
-
