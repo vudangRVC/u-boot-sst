@@ -894,7 +894,6 @@ static void configure_gpy111_phys(void)
 	unsigned int i;
 	unsigned short data;
 
-	printf("Configuring GPHY111 PHYs for RGMII delay...\n");
 	list_for_each(entry, mdio_get_list_head()) {
 		dev = list_entry(entry, struct mii_dev, link);
 
@@ -996,7 +995,7 @@ int board_late_init(void)
 	return 0;
 }
 
-int last_stage_init(void)
+static int last_stage_init(void)
 {	
 	if(board_id == BOARD_ID_RZG2L_SBC)
 	{
@@ -1006,6 +1005,8 @@ int last_stage_init(void)
 
 	return 0;
 }
+
+EVENT_SPY_SIMPLE(EVT_LAST_STAGE_INIT, last_stage_init);
 
 #ifndef CONFIG_SPL_BUILD
 
