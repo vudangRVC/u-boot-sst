@@ -10,6 +10,8 @@
 #include <part.h>
 #include <linux/usb/composite.h>
 
+#define SECTOR_SIZE          0x200
+
 /* Wait at maximum 60 seconds for cable connection */
 #define UMS_CABLE_READY_TIMEOUT	60
 

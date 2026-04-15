@@ -17,7 +17,7 @@
 
 #include "common.h"
 #include <asm/io.h>
-extern u64 soc_id;
+
 
 /******* USB2.0 Host registers (original offset is +0x200) *******/
 #define USB2_INT_ENABLE		0x000
@@ -72,6 +72,8 @@ extern u64 soc_id;
 #define USB2_ADPCTRL_IDDIG		BIT(19)
 #define USB2_ADPCTRL_IDPULLUP		BIT(5)	/* 1 = ID sampling is enabled */
 #define USB2_ADPCTRL_DRVVBUS		BIT(4)
+
+extern u64 soc_id;
 
 static void rcar_gen3_set_host_mode(struct rcar_gen3_chan *ch, int host)
 {
@@ -161,7 +163,9 @@ static void rcar_gen3_device_recognition(struct rcar_gen3_chan *ch)
 	 * So the checking always return host mode.
 	 * We only use peripheral mode. So we just force
 	 * set is_host to false */
+#if defined(CONFIG_RZ_CMN) || defined(CONFIG_R9A07G044C) || defined(CONFIG_R9A07G043U) || defined(CONFIG_R9A07G054L) || defined(CONFIG_ARCH_RZMPU) || defined(CONFIG_R8A774C0)
 	is_host = false;
+#endif
 	if (is_host)
 		rcar_gen3_init_for_host(ch);
 	else
@@ -310,4 +314,3 @@ int rcar_gen3_phy_usb2_probe(struct platform_device *pdev)
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Renesas R-Car Gen3 USB 2.0 PHY");
 MODULE_AUTHOR("Yoshihiro Shimoda <yoshihiro.shimoda.uh@renesas.com>");
-
