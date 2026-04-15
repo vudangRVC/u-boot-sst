@@ -20,6 +20,39 @@
 #include <android_image.h>
 
 #define BOOT_PARTITION_NAME "boot"
+#define FASTBOOT_MMC_NAME_LEN 16
+
+/*
+ * Use the runtime-selected board MMC device from "mmcdev" for Fastboot.
+ *
+ * This keeps Fastboot aligned with the board boot/storage selection without
+ * requiring board-specific CONFIG_FASTBOOT_FLASH_MMC_DEV or
+ * CONFIG_FASTBOOT_MMC_USER_NAME values.
+ *
+ * If "mmcdev" is not set, fall back to the build-time config.
+ */
+static const char *fastboot_mmc_get_user_name(void)
+{
+	static char name[FASTBOOT_MMC_NAME_LEN];
+	const char *s = env_get("mmcdev");
+
+	if (s && *s) {
+		snprintf(name, sizeof(name), "mmc%s", s);
+		return name;
+	}
+
+	return CONFIG_FASTBOOT_MMC_USER_NAME;
+}
+
+static int fastboot_mmc_get_devnum(void)
+{
+	const char *s = env_get("mmcdev");
+
+	if (s && *s)
+		return (int)dectoul(s, NULL);
+
+	return CONFIG_FASTBOOT_FLASH_MMC_DEV;
+}
 
 static int raw_part_get_info_by_name(struct blk_desc *dev_desc,
 				     const char *name,
@@ -75,7 +108,7 @@ static int do_get_part_info(struct blk_desc **dev_desc, const char *name,
 	int ret;
 
 	/* First try partition names on the default device */
-	*dev_desc = blk_get_dev("mmc", CONFIG_FASTBOOT_FLASH_MMC_DEV);
+	*dev_desc = blk_get_dev("mmc", fastboot_mmc_get_devnum());
 	if (*dev_desc) {
 		ret = part_get_info_by_name(*dev_desc, name, info);
 		if (ret >= 0)
@@ -345,8 +378,7 @@ int fastboot_mmc_get_part_info(const char *part_name,
 
 static struct blk_desc *fastboot_mmc_get_dev(char *response)
 {
-	struct blk_desc *ret = blk_get_dev("mmc",
-					   CONFIG_FASTBOOT_FLASH_MMC_DEV);
+	struct blk_desc *ret = blk_get_dev("mmc", fastboot_mmc_get_devnum());
 
 	if (!ret || ret->type == DEV_TYPE_UNKNOWN) {
 		pr_err("invalid mmc device\n");
@@ -478,14 +510,13 @@ void fastboot_mmc_flash_write(const char *cmd, void *download_buffer,
 #endif
 
 #if IS_ENABLED(CONFIG_FASTBOOT_MMC_USER_SUPPORT)
-	if (strcmp(cmd, CONFIG_FASTBOOT_MMC_USER_NAME) == 0) {
+	if (strcmp(cmd, fastboot_mmc_get_user_name()) == 0) {
 		dev_desc = fastboot_mmc_get_dev(response);
 		if (!dev_desc)
 			return;
-
 		strlcpy((char *)&info.name, cmd, sizeof(info.name));
-		info.size	= dev_desc->lba;
-		info.blksz	= dev_desc->blksz;
+		info.size = dev_desc->lba;
+		info.blksz = dev_desc->blksz;
 	}
 #endif
 
@@ -512,7 +543,8 @@ void fastboot_mmc_erase(const char *cmd, char *response)
 {
 	struct blk_desc *dev_desc;
 	struct disk_partition info;
-	struct mmc *mmc = find_mmc_device(CONFIG_FASTBOOT_FLASH_MMC_DEV);
+	lbaint_t blks, blks_start, blks_size, grp_size;
+	struct mmc *mmc = find_mmc_device(fastboot_mmc_get_devnum());
 
 #ifdef CONFIG_FASTBOOT_MMC_BOOT_SUPPORT
 	if (strcmp(cmd, CONFIG_FASTBOOT_MMC_BOOT1_NAME) == 0) {
@@ -532,7 +564,7 @@ void fastboot_mmc_erase(const char *cmd, char *response)
 #endif
 
 #ifdef CONFIG_FASTBOOT_MMC_USER_SUPPORT
-	if (strcmp(cmd, CONFIG_FASTBOOT_MMC_USER_NAME) == 0) {
+	if (strcmp(cmd, fastboot_mmc_get_user_name()) == 0) {
 		/* erase EMMC userdata */
 		dev_desc = fastboot_mmc_get_dev(response);
 		if (!dev_desc)
