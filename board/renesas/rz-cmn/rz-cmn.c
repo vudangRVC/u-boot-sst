@@ -944,6 +944,30 @@ static void setup_pins(void)
 	prt[PFC_P10]  = (prt[PFC_P10]  & 0xFE) | 0x01; /* Set high. */
 }
 
+int rzv2h_board_pmic_i2c_init(void)
+{
+	struct udevice *dev;
+	const u8 pmic_i2c_bus = 8;
+	u8 reg;
+	int ret;
+
+	ret = i2c_get_chip_for_busnum(pmic_i2c_bus, 0x12, 1, &dev);
+
+	if (!ret)
+	{
+		dm_i2c_read(dev, 0x3c, &reg, 1);
+		reg &= (~0x01);
+
+		dm_i2c_write(dev, 0x3c, &reg, 1);
+
+		udelay(2);
+		reg |= (0x01);
+
+		dm_i2c_write(dev, 0x3c, &reg, 1);
+	}
+
+	return ret;
+}
 int board_late_init(void)
 {
 	if(board_id == BOARD_ID_RZG2L_SBC)
@@ -965,6 +989,10 @@ int board_late_init(void)
 		}
 
 		setup_pins();
+	} else if (soc_id == RZ_SOC_RZV2H) {
+		int ret = rzv2h_board_pmic_i2c_init();
+		if (ret)
+			printf("Failed to initialize PMIC via I2C: %d\n", ret);
 	}
 #ifdef CONFIG_RENESAS_RZG2LWDT
 	rzg2l_reinitr_wdt();
