@@ -375,53 +375,26 @@ void fastboot_mmc_flash_write(const char *cmd, void *download_buffer,
 		if (!dev_desc)
 			return;
 
+		info.start = 0;
+		info.size = dev_desc->lba;
+		info.blksz = dev_desc->blksz;
+		strlcpy((char *)info.name, "rawimg", sizeof(info.name));
+
 		if (is_sparse_image(download_buffer)) {
-			struct fb_mmc_sparse  sparse_priv;
-			static struct sparse_storage sparse;
-			int err;
-			int header_size=sizeof(sparse_header_t)+sizeof(chunk_header_t);
+			int header_size = sizeof(sparse_header_t) +
+					sizeof(chunk_header_t);
 
-			/* Only 1st fragment packet got MBR information */
-			if ( 0 == is_valid_dos_buf(download_buffer+header_size)) {
+			if (is_valid_dos_buf((u8 *)download_buffer + header_size) == 0)
 				printf("Found valid MBR Information in image.\n");
-				sparse.start = 0;
-			}
 
-			sparse_priv.dev_desc = dev_desc;
-
-			sparse.blksz = dev_desc->blksz; /* eMMC block size: 512 */
-			sparse.size = dev_desc->lba;    /* eMMC total blocks: 30621696 * 512/1024/1024/1024= 14.6GB */
-			sparse.write = fb_mmc_sparse_write;
-			sparse.reserve = fb_mmc_sparse_reserve;
-			sparse.mssg = fastboot_fail;
-
-			/* write_sparse_image() will update sparse.start */
-			sparse.priv = &sparse_priv;
-			err = write_sparse_image(&sparse, cmd, download_buffer, response);
-			if (!err)
-				fastboot_okay("Flashing raw image Okay", response);
+			fastboot_block_write_sparse_image(dev_desc, &info, cmd,
+							download_buffer, response);
 		} else {
-			long start = 0;
-			int blksz = dev_desc->blksz;
-			lbaint_t blkcnt;
-			lbaint_t blks;
-
-			/* determine number of blocks to write */
-			blkcnt = ((download_bytes + (blksz - 1)) & ~(blksz - 1));
-			blkcnt = blkcnt / blksz;
-
-			blks = fb_mmc_blk_write(dev_desc, start / blksz, blkcnt, download_buffer);
-			if (blks != blkcnt) {
-				printf("........ wrote " LBAFU " bytes to 0x%lx failed.\n", blkcnt * blksz, start);
-				fastboot_fail("Flashing raw image failed", response);
-				return;
-			}
-
-			printf("........ wrote " LBAFU " bytes to 0x%lx success.\n", blkcnt * blksz, start);
-			fastboot_okay("Flashing raw image Okay", response);
+			fastboot_block_write_raw_image(dev_desc, &info, cmd,
+							download_buffer,
+							download_bytes, response);
 		}
-
-		return ;
+		return;
 	}
 
 #ifdef CONFIG_FASTBOOT_MMC_BOOT_SUPPORT
