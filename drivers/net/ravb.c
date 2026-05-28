@@ -77,7 +77,6 @@
 
 /* TOE Registers */
 #define CSR0			0x800
-#define CSR0_RPE		0x00000020
 
 #define ECMR_TRCCM		BIT(26)
 #define ECMR_RCPT		BIT(25)
@@ -604,9 +603,7 @@ static void ravb_config_rcar(struct udevice *dev)
 	struct ravb_priv *eth = dev_get_priv(dev);
 	struct phy_device *phy = eth->phydev;
 
-#if defined(CONFIG_RZG2L) || defined (CONFIG_RZ_CMN)
 	u32 mask = ECMR_CHG_DM | ECMR_RE | ECMR_TE;
-#endif
 
 	/* Set the transfer speed */
 	if (phy->speed == 100)
