@@ -9,13 +9,13 @@ obj-y += emac.o
 obj-$(CONFIG_DISPLAY_BOARDINFO) += board.o
 obj-$(CONFIG_TMU_TIMER) += ../../sh/lib/time.o
 obj-$(CONFIG_RCAR_GEN2) += lowlevel_init_ca15.o cpu_info-rcar.o
-obj-$(CONFIG_RCAR_64) += lowlevel_init_gen3.o
-obj-$(CONFIG_RCAR_GEN3) += cpu_info-rcar.o memmap-gen3.o
-obj-$(CONFIG_RCAR_GEN4) += cpu_info-rcar.o memmap-gen3.o
-obj-$(CONFIG_RCAR_GEN5) += cpu_info-rcar.o memmap-gen3.o
+obj-$(CONFIG_RCAR_64) += lowlevel_init_rcar_64.o
+obj-$(CONFIG_RCAR_GEN3) += cpu_info-rcar.o memmap-gen3.o lowlevel_init_gen3.o
+obj-$(CONFIG_RCAR_GEN4) += cpu_info-rcar.o memmap-gen3.o lowlevel_init_gen4.o
+obj-$(CONFIG_RCAR_GEN5) += cpu_info-rcar.o memmap-gen3.o lowlevel_init_gen3.o
 obj-$(CONFIG_RZ_G2) += cpu_info-rzg.o
 obj-$(CONFIG_RZG2L) += cpu_info-rzg2l.o memmap-rzg2l.o
-obj-$(CONFIG_RZ_CMN) += memmap-rz-cmn.o
+obj-$(CONFIG_RZ_CMN) += memmap-rz-cmn.o lowlevel_init_rz_cmn.o
 
 ifneq ($(CONFIG_RCAR_64),)
 obj-$(CONFIG_ARMV8_PSCI) += psci-rcar64.o

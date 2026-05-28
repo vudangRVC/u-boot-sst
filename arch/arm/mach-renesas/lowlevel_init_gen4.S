@@ -3,7 +3,7 @@
  * arch/arm/cpu/armv8/rcar_gen3/lowlevel_init.S
  *	This file is lowlevel initialize routine.
  *
- * (C) Copyright 2015-2026 Renesas Electronics Corporation
+ * (C) Copyright 2015 Renesas Electronics Corporation
  *
  * This file is based on the arch/arm/cpu/armv8/start.S
  *
