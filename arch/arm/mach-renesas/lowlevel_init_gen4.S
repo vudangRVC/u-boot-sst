@@ -27,6 +27,20 @@ ENDPROC(s_init)
 ENTRY(lowlevel_init)
 	mov	x29, lr			/* Save LR */
 
+	/* board_id <= arg2 (x2) from ATF boot args */
+	ldr	x8, =rcar_atf_boot_args
+	add	x8, x8, #16		/* 2 * 8 = offset to x2 */
+	ldr	x0, [x8]
+	ldr	x9, =board_id
+	str	x0, [x9]
+
+	/* soc_id <= arg3 (x3) from ATF boot args */
+	ldr	x8, =rcar_atf_boot_args
+	add	x8, x8, #24		/* 3 * 8 = offset to x3 */
+	ldr	x0, [x8]
+	ldr	x9, =soc_id
+	str	x0, [x9]
+
 #ifndef CONFIG_ARMV8_MULTIENTRY
 	/*
 	 * For single-entry systems the lowlevel init is very simple.

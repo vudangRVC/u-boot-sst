@@ -12,7 +12,19 @@
 
 #include "../../../drivers/mtd/spi/sf_internal.h"
 
+extern u64 board_id;
+extern u64 soc_id;
+
+#define BOARD_ID_RCAR_V4H_SPARROWHAWK	0x40
+#define RZ_SOC_RCAR_V4H			0x04
+
 #if defined(CONFIG_XPL_BUILD)
+
+void spl_board_id_setup(void)
+{
+	board_id = BOARD_ID_RCAR_V4H_SPARROWHAWK;
+	soc_id = RZ_SOC_RCAR_V4H;
+}
 
 static const struct renesas_dbsc5_board_config
 renesas_v4h_sparrowhawk_8g_6400_dbsc5_board_config = {
@@ -128,6 +140,14 @@ unsigned int spl_spi_get_uboot_offs(struct spi_flash *flash)
 {
 	const u8 sf_ids_evta1[6] = { 0x01, 0x02, 0x20, 0x4d, 0x00, 0x81 };
 
+	printf("SPL: board_id=0x%llx, soc_id=0x%llx",
+	       board_id, soc_id);
+
+	if (board_id == BOARD_ID_RCAR_V4H_SPARROWHAWK &&
+	    soc_id == RZ_SOC_RCAR_V4H)
+		printf(" (Sparrowhawk R-Car V4H)");
+	printf("\n");
+
 	renesas_v4h_sparrowhawk_is_evta1 = !memcmp(sf_ids_evta1, flash->info->id,
 						   sizeof(sf_ids_evta1));
 
@@ -140,10 +160,15 @@ void spl_perform_board_fixups(struct spl_image_info *spl_image)
 	int err, offs;
 	u32 size;
 
-	if (!renesas_v4h_sparrowhawk_is_evta1)
+	if (!renesas_v4h_sparrowhawk_is_evta1) {
+		if (board_id == BOARD_ID_RCAR_V4H_SPARROWHAWK)
+			printf("EVTB1 board detected (board_id=0x%llx)\n",
+			       board_id);
 		return;
+	}
 
-	printf("EVTA1 board detected\n");
+	printf("EVTA1 board detected (board_id=0x%llx, soc_id=0x%llx)\n",
+	       board_id, soc_id);
 
 	/*
 	 * MicroSD voltage switch is not populated on Sparrow Hawk EVTA1,
