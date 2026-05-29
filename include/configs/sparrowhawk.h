@@ -11,4 +11,7 @@
 
 #include "rcar-gen4-common.h"
 
+/* Platform settings stored in SPI flash at offset 0x1F00000 */
+#define CFG_SPL_PLATFORM_SETTINGS_OFFSET	0x400000
+
 #endif /* __SPARROWHAWK_H */

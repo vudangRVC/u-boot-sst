@@ -82,3 +82,13 @@
 &vcc_sdhi {
 	states = <1800000 0>, <3300000 1>;
 };
+
+&binman {
+	section {
+		sparrowhawk-platform-settings {
+			filename = "sparrowhawk-platform-settings.bin";
+			offset = <0x400000>;
+			type = "blob";
+		};
+	};
+};

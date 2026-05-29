@@ -18,12 +18,36 @@ extern u64 soc_id;
 #define BOARD_ID_RCAR_V4H_SPARROWHAWK	0x40
 #define RZ_SOC_RCAR_V4H			0x04
 
+typedef struct __attribute__((packed)) {
+	u32 model_id;
+	u32 revision_minor : 16;
+	u32 revision_major : 16;
+	char model_string[256];
+	char mfg_name[256];
+} platform_desc_t;
+
 #if defined(CONFIG_XPL_BUILD)
 
 void spl_board_id_setup(void)
 {
 	board_id = BOARD_ID_RCAR_V4H_SPARROWHAWK;
 	soc_id = RZ_SOC_RCAR_V4H;
+}
+
+static void read_platform_settings(struct spi_flash *flash)
+{
+	platform_desc_t pdesc;
+	int ret;
+
+	ret = spi_flash_read(flash, CFG_SPL_PLATFORM_SETTINGS_OFFSET,
+			     sizeof(pdesc), &pdesc);
+	if (ret) {
+		printf("SPL: failed to read platform-settings: %d\n", ret);
+		return;
+	}
+
+	printf("SPL: platform: model_id=%u, model_string=%s, mfg=%s\n",
+	       pdesc.model_id, pdesc.model_string, pdesc.mfg_name);
 }
 
 static const struct renesas_dbsc5_board_config
@@ -147,6 +171,8 @@ unsigned int spl_spi_get_uboot_offs(struct spi_flash *flash)
 	    soc_id == RZ_SOC_RCAR_V4H)
 		printf(" (Sparrowhawk R-Car V4H)");
 	printf("\n");
+
+	read_platform_settings(flash);
 
 	renesas_v4h_sparrowhawk_is_evta1 = !memcmp(sf_ids_evta1, flash->info->id,
 						   sizeof(sf_ids_evta1));
