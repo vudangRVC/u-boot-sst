@@ -25,6 +25,7 @@
 #define BOARD_ID_RZV2H_EVK				0x30
 #define BOARD_ID_RZV2H_RDK				0x31
 #define BOARD_ID_IMDT_V2H_SBC			0x32
+#define BOARD_ID_RCAR_V4H_SPARROWHAWK	0x40
 
 /*
  * RZ Board SoC Identifiers
@@ -34,6 +35,7 @@
 #define RZ_SOC_RZG2L					0x01
 #define RZ_SOC_RZV2L					0x02
 #define RZ_SOC_RZV2H					0x03
+#define RZ_SOC_RCAR_V4H					0x04
 
 /* boot option */
 
