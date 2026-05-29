@@ -15,6 +15,11 @@
 #define CONFIG_SPL_TARGET	"spl/u-boot-spl.scif"
 #endif
 
+#ifdef CONFIG_SPL_BUILD
+/* SPL stub - serial base for build only, SPL never runs on this board */
+#define SCIF0_BASE	0x1004b800
+#endif
+
 /* RZ board id defines, it will be used to compare with the parameter
  * passed by ATF to decide how to configure U-Boot
  */
@@ -70,9 +75,6 @@
 #define CONFIG_LOADADDR			CONFIG_SYS_LOAD_ADDR // Default load address for tfpt,bootp...
 #define CONFIG_VERY_BIG_RAM
 #define CFG_MAX_MEM_MAPPED		(0x80000000u - DRAM_RSV_SIZE)
-
-/* The HF/QSPI layout permits up to 1 MiB large bootloader blob */
-#define CONFIG_BOARD_SIZE_LIMIT		1048576
 
 /* ENV setting */
 #define CFG_EXTRA_ENV_SETTINGS \

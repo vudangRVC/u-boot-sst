@@ -93,9 +93,10 @@ config RZG2L
 	  RZ/V2L & RZ/Five) is not yet available.
 
 config RZ_CMN
-	prompt "Renesas RZ/CMN Family ARM SoCs"
+	bool "Renesas RZ/CMN Family ARM SoCs"
 	select GICV3
 	select RCAR_64
+	select SUPPORT_SPL
 	imply CLK_RZG2L
 	imply MULTI_DTB_FIT
 	imply PINCTRL_RZG2L
@@ -105,7 +106,14 @@ config RZ_CMN
 	imply SCIF_CONSOLE
 	imply SYS_I2C_RZ_RIIC
 	imply SYS_MALLOC_F
-	bool "RZ common boards"
+	imply SPL
+	imply SPL_BOARD_INIT
+	imply SPL_LIBCOMMON_SUPPORT
+	imply SPL_LIBGENERIC_SUPPORT
+	imply SPL_SERIAL
+	imply SPL_SYS_MALLOC_SIMPLE
+	imply SPL_TINY_MEMSET
+	imply SPL_USE_TINY_PRINTF
 	help
 		Enable support for boards based on Renesas RZ common SoCs.
 
