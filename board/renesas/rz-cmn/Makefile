@@ -7,7 +7,8 @@
 #
 
 ifdef CONFIG_SPL_BUILD
-obj-y	:= spl.o
+obj-y	:= spl_rz_cmn.o
+obj-$(CONFIG_XPL_BUILD) += spl_sparrow.o
 else
 obj-y	:= rz-cmn.o
 endif
