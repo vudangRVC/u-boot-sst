@@ -38,6 +38,10 @@ soc_id:
 ENTRY(save_boot_params)
 	adr     x8, rcar_atf_boot_args
 	stp     x0, x1, [x8], #16
+	/* If soc_id (x3) == 0, default to R-Car V4H (0x04) */
+	cbnz    x3, 1f
+	mov     x3, #0x04
+1:
 	stp     x2, x3, [x8], #16
 	b       save_boot_params_ret
 ENDPROC(save_boot_params)

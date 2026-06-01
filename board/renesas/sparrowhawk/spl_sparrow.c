@@ -13,7 +13,6 @@
 #include "../../../drivers/mtd/spi/sf_internal.h"
 
 extern u64 board_id;
-extern u64 soc_id;
 
 #define BOARD_ID_RCAR_V4H_SPARROWHAWK	0x40
 #define RZ_SOC_RCAR_V4H			0x04
@@ -30,8 +29,7 @@ typedef struct __attribute__((packed)) {
 
 void spl_board_id_setup(void)
 {
-	board_id = BOARD_ID_RCAR_V4H_SPARROWHAWK;
-	soc_id = RZ_SOC_RCAR_V4H;
+	board_id = 0; //set boad_id default value to 0.
 }
 
 static void read_platform_settings(struct spi_flash *flash)
@@ -46,8 +44,9 @@ static void read_platform_settings(struct spi_flash *flash)
 		return;
 	}
 
-	printf("SPL: platform: model_id=%u, model_string=%s, mfg=%s\n",
+	printf("SPL: platform: model_id=0x%x, model_string=%s, mfg=%s\n",
 	       pdesc.model_id, pdesc.model_string, pdesc.mfg_name);
+	board_id = pdesc.model_id; //set board_id from flash.
 }
 
 static const struct renesas_dbsc5_board_config
@@ -153,14 +152,6 @@ unsigned int spl_spi_get_uboot_offs(struct spi_flash *flash)
 {
 	const u8 sf_ids_evta1[6] = { 0x01, 0x02, 0x20, 0x4d, 0x00, 0x81 };
 
-	printf("SPL: board_id=0x%llx, soc_id=0x%llx",
-	       board_id, soc_id);
-
-	if (board_id == BOARD_ID_RCAR_V4H_SPARROWHAWK &&
-	    soc_id == RZ_SOC_RCAR_V4H)
-		printf(" (Sparrowhawk R-Car V4H)");
-	printf("\n");
-
 	read_platform_settings(flash);
 
 	renesas_v4h_sparrowhawk_is_evta1 = !memcmp(sf_ids_evta1, flash->info->id,
@@ -181,9 +172,6 @@ void spl_perform_board_fixups(struct spl_image_info *spl_image)
 			       board_id);
 		return;
 	}
-
-	printf("EVTA1 board detected (board_id=0x%llx, soc_id=0x%llx)\n",
-	       board_id, soc_id);
 
 	if (!blob)
 		return;
