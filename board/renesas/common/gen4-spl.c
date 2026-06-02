@@ -66,8 +66,8 @@ void board_init_f(ulong dummy)
 
 	spl_board_id_setup();
 
-	printf("ATF boot args: board_id=0x%llx, soc_id=0x%llx\n",
-	       board_id, soc_id);
+	printf("ATF boot args: board_id=0x%lx, soc_id=0x%lx\n",
+	       (unsigned long)board_id, (unsigned long)soc_id);
 
 	ret = uclass_get_device_by_name(UCLASS_NOP, "ram@e6780000", &dev);
 	if (ret)

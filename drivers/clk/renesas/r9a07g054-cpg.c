@@ -160,7 +160,7 @@ static const struct {
 };
 
 static const struct {
-	struct rzg2l_mod_clk common[79];
+	struct rzg2l_mod_clk common[80];
 	struct rzg2l_mod_clk drp[5];
 } mod_clks = {
 	.common = {

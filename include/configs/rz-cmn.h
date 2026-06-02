@@ -9,7 +9,9 @@
 #include <asm/arch/renesas.h>
 #include <configs/rz-cmn_env.h>
 
+#ifndef CONFIG_REMAKE_ELF
 #define CONFIG_REMAKE_ELF
+#endif
 
 #ifdef CONFIG_SPL
 #define CONFIG_SPL_TARGET	"spl/u-boot-spl.scif"
@@ -69,14 +71,19 @@
 #define CONFIG_SH_SDHI_FREQ		133000000
 
 #define DRAM_RSV_SIZE			0x08000000
+#ifndef CFG_SYS_SDRAM_BASE
 #define CFG_SYS_SDRAM_BASE		0x48000000
+#endif
+#ifndef CFG_SYS_SDRAM_SIZE
 #define CFG_SYS_SDRAM_SIZE		(0x200000000u - DRAM_RSV_SIZE) //total 8GB
+#endif
 #define CONFIG_SYS_LOAD_ADDR		0x58000000
 #define CONFIG_LOADADDR			CONFIG_SYS_LOAD_ADDR // Default load address for tfpt,bootp...
 #define CONFIG_VERY_BIG_RAM
 #define CFG_MAX_MEM_MAPPED		(0x80000000u - DRAM_RSV_SIZE)
 
 /* ENV setting */
+#ifndef CFG_EXTRA_ENV_SETTINGS
 #define CFG_EXTRA_ENV_SETTINGS \
 	"bootenvfile=uEnv.txt\0" \
 	"image_flavor=normal\0" \
@@ -93,8 +100,11 @@
 		"fi;\0" \
 	"bootimage=booti ${image_addr} - ${dtb_addr} \0" \
 	RZ_ENV_DEFAULTS
+#endif
 
+#ifndef CONFIG_BOOTCOMMAND
 #define CONFIG_BOOTCOMMAND	"run envboot;run prodsdboot"
+#endif
 
 /* For board */
 /* Ethernet RAVB */

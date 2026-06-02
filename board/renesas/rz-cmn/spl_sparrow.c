@@ -168,8 +168,8 @@ void spl_perform_board_fixups(struct spl_image_info *spl_image)
 
 	if (!renesas_v4h_sparrowhawk_is_evta1) {
 		if (board_id == BOARD_ID_RCAR_V4H_SPARROWHAWK)
-			printf("EVTB1 board detected (board_id=0x%llx)\n",
-			       board_id);
+			printf("EVTB1 board detected (board_id=0x%lx)\n",
+			       (unsigned long)board_id);
 		return;
 	}
 

@@ -548,7 +548,7 @@ static int ravb_config(struct udevice *dev)
 		(struct ravb_device_ops *)dev_get_driver_data(dev);
 	struct ravb_priv *eth = dev_get_priv(dev);
 	struct phy_device *phy = eth->phydev;
-#if !(defined(CONFIG_RZG2L) || defined(CONFIG_R9A07G054L) || \
+#if !(defined(CONFIG_RZG2L) || defined(CONFIG_RZ_CMN) || defined(CONFIG_R9A07G054L) || \
 	defined(CONFIG_R9A07G043U) || defined(CONFIG_RZF_DEV) || defined(CONFIG_R9A08G045S))
 	u32 mask = ECMR_CHG_DM | ECMR_RE | ECMR_TE;
 #endif

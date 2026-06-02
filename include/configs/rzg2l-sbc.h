@@ -27,7 +27,9 @@
 #define DDR_RESERVED_SIZE 0x10000000  // 256MB reserved (128MB secure + 128MB ECC)
 #define DDR_AVAILABLE_SIZE (DDR_TOTAL_SIZE - DDR_RESERVED_SIZE)
 
+#ifndef CONFIG_REMAKE_ELF
 #define CONFIG_REMAKE_ELF
+#endif
 
 #ifdef CONFIG_SPL
 #define CONFIG_SPL_TARGET	"spl/u-boot-spl.scif"
@@ -94,7 +96,9 @@
 	"ethrotate=no\0" \
 	"ethact=ethernet@11c30000\0" /* The short connector. */
 
+#ifndef CONFIG_BOOTCOMMAND
 #define CONFIG_BOOTCOMMAND	"run bootcmd_load;run bootimage"
+#endif
 
 #else
 
@@ -120,7 +124,9 @@
 		"fi;\0" \
 	"bootimage=booti ${image_addr} - ${dtb_addr} \0"
 
+#ifndef CONFIG_BOOTCOMMAND
 #define CONFIG_BOOTCOMMAND	"run envboot;run prodsdboot"
+#endif
 
 #endif
 
