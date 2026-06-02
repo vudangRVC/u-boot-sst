@@ -7,8 +7,15 @@
 #
 
 ifdef CONFIG_SPL_BUILD
+ifdef CONFIG_RCAR_GEN4
+obj-y	:= spl_sparrow.o
+else
 obj-y	:= spl_rz_cmn.o
-obj-$(CONFIG_XPL_BUILD) += spl_sparrow.o
+endif
+else
+ifdef CONFIG_RCAR_GEN4
+obj-y	:= sparrowhawk.o
 else
 obj-y	:= rz-cmn.o
+endif
 endif

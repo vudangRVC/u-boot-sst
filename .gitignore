@@ -39,6 +39,7 @@
 *.swp
 *.tab.[ch]
 *.ti-*
+*.srec
 # Build tree
 /build*
 
@@ -139,3 +140,5 @@ __pycache__
 
 # Clang's compilation database file
 /compile_commands.json
+platform_info.json
+.gitignore
