@@ -13,9 +13,6 @@ else
 obj-y	:= spl_rz_cmn.o
 endif
 else
-ifdef CONFIG_RCAR_GEN4
-obj-y	:= sparrowhawk.o
-else
-obj-y	:= rz-cmn.o
-endif
+obj-$(CONFIG_RZ_CMN)	+= rz-cmn.o
+obj-$(CONFIG_RCAR_GEN4)	+= sparrowhawk.o
 endif

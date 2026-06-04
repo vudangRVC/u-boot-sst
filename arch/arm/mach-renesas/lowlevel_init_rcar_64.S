@@ -35,6 +35,7 @@ board_id:
 soc_id:
 	.dword  0
 
+	.text
 ENTRY(save_boot_params)
 	adr     x8, rcar_atf_boot_args
 	stp     x0, x1, [x8], #16
