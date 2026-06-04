@@ -57,3 +57,8 @@ void board_cleanup_before_linux(void)
 	writel(SRCR_PCIEC0_APP_RESET | SRCR_PCIEC1_APP_RESET, SRSTCLR11);
 	readl(SRSTCLR11);
 }
+
+int board_late_init(void)
+{
+	return 0;
+}

@@ -47,6 +47,7 @@ CONFIG_SPI_FLASH_ATMEL=y
 CONFIG_SPI_FLASH=y
 CONFIG_SMBIOS_PRODUCT_NAME=""
 CONFIG_SMBIOS_MANUFACTURER=""
+CONFIG_RZ_CMN=y
 CONFIG_RESET_RZG2L_USBPHY_CTRL=y
 CONFIG_RENESAS_RAVB=y
 CONFIG_R9A07Gx=y
@@ -198,15 +199,19 @@ CONFIG_SPL_STACK_R=y
 # CONFIG_SPL_DM_MMC is not set
 # CONFIG_SPL_BOARD_INIT is not set
 CONFIG_ARCH_CPU_INIT=y
-CONFIG_BOARD_LATE_INIT=y
-
 CONFIG_SH_SDHI=y
 CONFIG_SPL_HAS_BSS_LINKER_SECTION=y 
 
 #============================sparrowhawk need ============================================
 CONFIG_ENABLE_ARM_SOC_BOOT0_HOOK=y
 CONFIG_RCAR_GEN4=y
-CONFIG_RZ_CMN=y
+
 #============================sparrowhawk ============================================
 
+
+#======== cmn ==============================================================================
+
+CONFIG_BOARD_LATE_INIT=y
+
+#======== cmn ==============================================================================
 
