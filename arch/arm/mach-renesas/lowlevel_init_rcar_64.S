@@ -39,9 +39,14 @@ soc_id:
 ENTRY(save_boot_params)
 	adr     x8, rcar_atf_boot_args
 	stp     x0, x1, [x8], #16
-	/* If soc_id (x3) == 0, default to R-Car V4H (0x04) */
+	/* If soc_id (x3) != 0, trust the passed value */
 	cbnz    x3, 1f
-	mov     x3, #0x04
+	/* soc_id == 0: read PRR (0xFFF00044) to determine SoC family */
+	ldr	x9, =0xFFF00044
+	ldr	w3, [x9]		/* w3 = PRR */
+	ubfx	w3, w3, #8, #7		/* w3 = PRR[14:8] = CPU type (0x5C=V4H) */
+	/* R-Car Gen4: soc_id = 0x04 */
+	mov	w3, #0x04
 1:
 	stp     x2, x3, [x8], #16
 	b       save_boot_params_ret

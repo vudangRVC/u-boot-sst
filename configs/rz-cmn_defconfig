@@ -201,9 +201,10 @@ CONFIG_SPL_STACK_R=y
 CONFIG_ARCH_CPU_INIT=y
 CONFIG_SH_SDHI=y
 CONFIG_SPL_HAS_BSS_LINKER_SECTION=y 
+CONFIG_ENABLE_ARM_SOC_BOOT0_HOOK=y
 
 #============================sparrowhawk need ============================================
-CONFIG_ENABLE_ARM_SOC_BOOT0_HOOK=y
+
 CONFIG_RCAR_GEN4=y
 
 #============================sparrowhawk ============================================
