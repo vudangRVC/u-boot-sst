@@ -17,12 +17,9 @@ config RCAR_64
 	imply OF_UPSTREAM
 	imply SUPPORT_EMMC_RPMB if MMC
 
-choice
-	prompt "Target Renesas SoC select"
-	default RCAR_32
-
 config RCAR_32
 	bool "Renesas ARM SoCs R-Car Gen1/Gen2 (32bit)"
+	default y if !RCAR_GEN3 && !RCAR_GEN4 && !RCAR_GEN5 && !RZA1 && !RZN1 && !RZG2L && !RZ_CMN
 	select CPU_V7A
 
 config RCAR_GEN3
@@ -52,11 +49,11 @@ config RCAR_GEN5
 	select PINCTRL_PFC
 
 config RZA1
-	prompt "Renesas ARM SoCs RZ/A1 (32bit)"
+	bool "Renesas ARM SoCs RZ/A1 (32bit)"
 	select CPU_V7A
 
 config RZN1
-	prompt "Renesas ARM SoCs RZ/N1 (32bit)"
+	bool "Renesas ARM SoCs RZ/N1 (32bit)"
 	select CPU_V7A
 	select ARMV7_SET_CORTEX_SMPEN if !SPL
 	select SPL_ARMV7_SET_CORTEX_SMPEN if SPL
@@ -74,7 +71,7 @@ config RZN1
 	imply CMD_DM
 
 config RZG2L
-	prompt "Renesas RZ/G2L Family ARM SoCs"
+	bool "Renesas RZ/G2L Family ARM SoCs"
 	select GICV3
 	select RCAR_64
 	imply CLK_RZG2L
@@ -96,6 +93,7 @@ config RZ_CMN
 	bool "Renesas RZ/CMN Family ARM SoCs"
 	select GICV3
 	select RCAR_64
+	select PINCTRL_PFC
 	select SUPPORT_SPL
 	imply CLK_RZG2L
 	imply MULTI_DTB_FIT
@@ -119,8 +117,6 @@ config RZ_CMN
 
 		This currently includes platforms using RZ/G2L, RZ/V2L, and
 		RZ/V2H
-
-endchoice
 
 config SYS_SOC
 	default "renesas" if ARCH_RENESAS

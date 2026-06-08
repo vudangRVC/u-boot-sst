@@ -9,9 +9,6 @@
 ifdef CONFIG_SPL_BUILD
 obj-y	:= spl_rz_cmn.o
 else
-ifdef CONFIG_RCAR_GEN4
-obj-y	:= sparrowhawk.o
-else
 obj-y	:= rz-cmn.o
 endif
-endif
+
