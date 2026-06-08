@@ -686,6 +686,8 @@ void s_init(void)
 		s_init_rzg2l_sbc();
 	} else if (board_id == BOARD_ID_RZV2L_EVK || board_id == BOARD_ID_RZG2L_EVK || board_id == BOARD_ID_RS_G2L100) {
 		s_init_rzg2l();
+	} else if (board_id == BOARD_ID_RCAR_V4H_SPARROWHAWK) {
+		s_init_sparrow();
 	} else {
 		return;
 	}
@@ -902,9 +904,9 @@ int board_early_init_f(void)
 {
 	// printf("=== U-Boot: board_early_init_f, board_id=0x%lx ===\n",
 	//        (unsigned long)board_id);
-	// if (soc_id == RZ_SOC_RCAR_V4H) {
-	// 	return board_early_init_f_sparrow();
-	// }
+	if (soc_id == RZ_SOC_RCAR_V4H) {
+		return board_early_init_f_sparrow();
+	}
 
 	s_init();
 	return 0;
