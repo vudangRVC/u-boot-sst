@@ -203,7 +203,7 @@ CONFIG_SPL_HAS_BSS_LINKER_SECTION=y
 CONFIG_ENABLE_ARM_SOC_BOOT0_HOOK=y
 
 #============================sparrowhawk need ============================================
-
+CONFIG_RCAR_GEN4=y
 CONFIG_TARGET_SPARROWHAWK=y
 #============================sparrowhawk ============================================
 

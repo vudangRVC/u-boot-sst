@@ -216,6 +216,11 @@ static int sh_serial_probe(struct udevice *dev)
 	priv->mapbase	= plat->base;
 	priv->type	= plat->type;
 	priv->clk_mode	= plat->clk_mode;
+#ifdef SCIF_RUNTIME_REGMAP
+	/* RZ/G2L SCIF is probed as SCIFA; everything else uses the R-Car layout */
+	priv->regtype	= (priv->type == PORT_SCIFA) ?
+				SCIx_REGTYPE_RZG2L : SCIx_REGTYPE_RCAR;
+#endif
 
 	/* De-assert the module reset if it is defined. */
 	ret = reset_get_by_index(dev, 0, &rst);
