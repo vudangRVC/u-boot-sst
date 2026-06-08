@@ -446,7 +446,7 @@ static inline void *phy_get_drvdata(struct phy *phy)
 	})
 
 
-#if defined(CONFIG_RZ_CMN) || defined(CONFIG_R9A07G044C) || defined(CONFIG_R9A07G043U) || defined(CONFIG_R9A07G054L) || defined(CONFIG_ARCH_RZMPU) || defined(CONFIG_RCAR_GEN4)
+#if defined(CONFIG_RZ_CMN) || defined(CONFIG_R9A07G044C) || defined(CONFIG_R9A07G043U) || defined(CONFIG_R9A07G054L) || defined(CONFIG_ARCH_RZMPU) || defined(CONFIG_RCAR_GEN4) || defined(CONFIG_TARGET_SPARROWHAWK)
 #define RZG2L_PHY_BASE	0x11C50200
 #define RZV2H_PHY_BASE	0x15800200
 #define RCAR3_PHY_DEVICE "RZG2L-PHY "

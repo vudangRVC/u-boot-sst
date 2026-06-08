@@ -12,6 +12,7 @@ obj-$(CONFIG_RCAR_GEN2) += lowlevel_init_ca15.o cpu_info-rcar.o
 obj-$(CONFIG_RCAR_64) += lowlevel_init_rcar_64.o
 obj-$(CONFIG_RCAR_GEN3) += cpu_info-rcar.o memmap-gen3.o lowlevel_init_gen3.o
 obj-$(CONFIG_RCAR_GEN4) += cpu_info-rcar.o memmap-gen3.o lowlevel_init_rz_cmn.o
+obj-$(CONFIG_TARGET_SPARROWHAWK) += cpu_info-rcar.o memmap-gen3.o lowlevel_init_rz_cmn.o
 obj-$(CONFIG_RCAR_GEN5) += cpu_info-rcar.o memmap-gen3.o lowlevel_init_gen3.o
 obj-$(CONFIG_RZ_G2) += cpu_info-rzg.o
 obj-$(CONFIG_RZG2L) += cpu_info-rzg2l.o memmap-rzg2l.o
@@ -36,7 +37,7 @@ else
 	srec_cat_le_cmd := "-l-e-constant"
 endif
 
-ifneq ($(CONFIG_RCAR_GEN4),)
+ifneq ($(CONFIG_RCAR_GEN4)$(CONFIG_TARGET_SPARROWHAWK),)
 quiet_cmd_srec_cat = SRECCAT $@
       cmd_srec_cat = srec_cat -output $@ -M 8 $< -M 8 \
 			-Output_Block_Size 16 \

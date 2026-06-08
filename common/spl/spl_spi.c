@@ -93,6 +93,7 @@ static int spl_spi_load_image(struct spl_image_info *spl_image,
 	 * In DM mode: defaults speed and mode will be
 	 * taken from DT when available
 	 */
+	printf("=== SPL: SPI load on bus=%u cs=%u ===\n", sf_bus, sf_cs);
 	flash = spi_flash_probe(sf_bus, sf_cs,
 				CONFIG_SF_DEFAULT_SPEED,
 				CONFIG_SF_DEFAULT_MODE);
@@ -100,6 +101,7 @@ static int spl_spi_load_image(struct spl_image_info *spl_image,
 		puts("SPI probe failed.\n");
 		return -ENODEV;
 	}
+	printf("=== SPL: SPI flash probed OK ===\n");
 
 	spl_load_init(&load, spl_spi_fit_read, flash, 1);
 
@@ -118,12 +120,16 @@ static int spl_spi_load_image(struct spl_image_info *spl_image,
 #endif
 
 	payload_offs = spl_spi_get_uboot_offs(flash);
+	printf("=== SPL: payload offset in SPI = 0x%x ===\n", payload_offs);
 	if (CONFIG_IS_ENABLED(OF_REAL)) {
 		payload_offs = ofnode_conf_read_int("u-boot,spl-payload-offset",
 						    payload_offs);
+		printf("=== SPL: payload offset from FDT = 0x%x ===\n", payload_offs);
 	}
 
+	printf("=== SPL: loading FIT from SPI at 0x%x ===\n", payload_offs);
 	err = spl_load(spl_image, bootdev, &load, 0, payload_offs);
+	printf("=== SPL: SPI load done, err=%d ===\n", err);
 	if (IS_ENABLED(CONFIG_SPI_FLASH_SOFT_RESET))
 		err = spi_nor_remove(flash);
 	return err;

@@ -157,7 +157,6 @@ CONFIG_USE_PREBOOT=y
 CONFIG_USE_BOOTARGS=y
 CONFIG_USB_XHCI_PCI=y
 CONFIG_USB_XHCI_GENERIC=y
-CONFIG_TARGET_SPARROWHAWK=y
 CONFIG_SYS_BOOT_GET_CMDLINE=y
 CONFIG_SPL_SPI=y
 CONFIG_SPL_SPI_LOAD=y
@@ -205,8 +204,7 @@ CONFIG_ENABLE_ARM_SOC_BOOT0_HOOK=y
 
 #============================sparrowhawk need ============================================
 
-CONFIG_RCAR_GEN4=y
-
+CONFIG_TARGET_SPARROWHAWK=y
 #============================sparrowhawk ============================================
 
 
