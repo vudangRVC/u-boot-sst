@@ -6,11 +6,21 @@
  * Copyright (C) 2025 Marek Vasut <marek.vasut+renesas@mailbox.org>
  */
 
+#include <asm/arch/rcar-gen4-base.h>
+#include <asm/arch/renesas.h>
 #include <asm/io.h>
 #include <compiler.h>
+#include <cpu_func.h>
 #include <dbsc5.h>
+#include <dm/uclass.h>
+#include <dm/util.h>
 #include <fdt_support.h>
+#include <hang.h>
+#include <image.h>
 #include <init.h>
+#include <linux/bitops.h>
+#include <log.h>
+#include <mapmem.h>
 #include <spi.h>
 #include <spi_flash.h>
 #include <spl.h>
@@ -34,12 +44,36 @@ typedef struct __attribute__((packed)) {
 
 #if defined(CONFIG_XPL_BUILD)
 
+#define CNTCR_EN	BIT(0)
+
+void board_debug_uart_init(void)
+{
+}
+
+static void init_generic_timer(void)
+{
+	const u32 freq = CONFIG_SYS_CLK_FREQ;
+
+	/* Update memory mapped and register based freqency */
+	if (IS_ENABLED(CONFIG_ARM64))
+		asm volatile("msr cntfrq_el0, %0" :: "r" (freq));
+	else
+		asm volatile("mcr p15, 0, %0, c14, c0, 0" :: "r" (freq));
+
+	writel(freq, CNTFID0);
+
+	/* Enable counter */
+	setbits_le32(CNTCR_BASE, CNTCR_EN);
+}
+
 /* ---------- Sparrowhawk: platform settings ---------- */
 
 void spl_board_id_setup(void)
 {
-	if (soc_id == RZ_SOC_RCAR_V4H)
+	if (soc_id == RZ_SOC_RCAR_V4H) {
+		printf("=== SPL: board_id=0 (V4H Sparrowhawk) ===\n");
 		board_id = 0;
+	}
 }
 
 #ifndef CFG_SPL_PLATFORM_SETTINGS_OFFSET
@@ -177,11 +211,15 @@ unsigned int spl_spi_get_uboot_offs(struct spi_flash *flash)
 	if (soc_id != RZ_SOC_RCAR_V4H)
 		return 0;
 
+	printf("=== SPL: SPI flash probe done, reading platform settings ===\n");
 	read_platform_settings(flash);
 
 	renesas_v4h_sparrowhawk_is_evta1 = !memcmp(sf_ids_evta1, flash->info->id,
 						   sizeof(sf_ids_evta1));
+	printf("=== SPL: board is EVTA1: %s ===\n",
+	       renesas_v4h_sparrowhawk_is_evta1 ? "yes" : "no");
 
+	printf("=== SPL: U-Boot offset in SPI = 0x%x ===\n", CONFIG_SYS_SPI_U_BOOT_OFFS);
 	return CONFIG_SYS_SPI_U_BOOT_OFFS;
 }
 
@@ -298,31 +336,133 @@ void spl_perform_board_fixups(struct spl_image_info *spl_image)
 
 /* ---------- RZ/CMN stubs ----------
  * Marked __weak so they only apply when no strong override exists
- * (e.g. gen4-spl.c for CONFIG_RCAR_GEN4 builds).
  */
-void __weak board_init_f(ulong dummy)
+
+int board_fit_config_name_match(const char *name)
 {
+	printf("=== SPL: FIT config match for \"%s\", soc_id=0x%lx ===\n",
+	       name, (unsigned long)soc_id);
+	if (soc_id == RZ_SOC_RCAR_V4H)
+		return !strstr(name, "sparrow-hawk") ? -1 : 0;
+
+	if (soc_id == RZ_SOC_RZV2H)
+		return !strstr(name, "rzv2h") ? -1 : 0;
+
+	if (soc_id == RZ_SOC_RZG2L || soc_id == RZ_SOC_RZV2L)
+		return !strstr(name, "rzg2l") && !strstr(name, "rzv2l") &&
+		       !strstr(name, "rs-g2l") ? -1 : 0;
+
+	return -1;
 }
+
+bool spl_board_needs_dbsc5_init(void)
+{
+	if (soc_id != RZ_SOC_RCAR_V4H)
+		return false;
+	/* DBSC5 init is needed to make low DDR accessible for SPL stack
+	 * relocation (CONFIG_SPL_STACK_R_ADDR=0x44000000 is below
+	 * CFG_SYS_SDRAM_BASE). Without this, memcpy in
+	 * spl_relocate_stack_gd() data aborts.
+	 * ATF only initializes the upper DDR; DBSC5 completes the rest.
+	 */
+	return true;
+}
+
+void board_init_f(ulong dummy)
+{
+	if (soc_id != RZ_SOC_RCAR_V4H)
+		return;
+	struct udevice *dev;
+	int ret;
+
+	printf("=== SPL: board_init_f entered ===\n");
+
+	if (CONFIG_IS_ENABLED(OF_CONTROL)) {
+		ret = spl_early_init();
+		if (ret) {
+			debug("spl_early_init() failed: %d\n", ret);
+			hang();
+		}
+	}
+
+	printf("=== SPL: preloader_console_init ===\n");
+	preloader_console_init();
+
+	printf("=== SPL: spl_board_id_setup ===\n");
+	spl_board_id_setup();
+
+	printf("ATF boot args: board_id=0x%lx, soc_id=0x%lx\n",
+	       (unsigned long)board_id, (unsigned long)soc_id);
+
+	if (spl_board_needs_dbsc5_init()) {
+		printf("=== SPL: DBSC5 init (DDR re-initialization) ===\n");
+		ret = uclass_get_device_by_name(UCLASS_NOP, "ram@e6780000", &dev);
+		if (ret)
+			printf("DBSC5 init failed: %d\n", ret);
+
+		ret = uclass_get_device_by_name(UCLASS_RAM, "ram@ffec0000", &dev);
+		if (ret)
+			printf("RTVRAM init failed: %d\n", ret);
+		printf("=== SPL: DBSC5 init done ===\n");
+	} else {
+		printf("=== SPL: DBSC5 init SKIPPED (ATF already init DDR) ===\n");
+	}
+};
 
 void __weak spl_board_init(void)
 {
 }
 
-u32 __weak spl_boot_device(void)
+u32 spl_boot_device(void)
 {
-	return BOOT_DEVICE_MMC1;
+	printf("=== SPL: spl_boot_device -> BOOT_DEVICE_SPI ===\n");
+	return BOOT_DEVICE_SPI;
 }
 
-void __weak s_init(void)
+struct legacy_img_hdr *spl_get_load_buffer(ssize_t offset, size_t size)
 {
+	if (soc_id != RZ_SOC_RCAR_V4H)
+		return NULL;
+	printf("=== SPL: load buffer at 0x%lx + 0x%lx = 0x%lx ===\n",
+	       (unsigned long)CONFIG_SYS_LOAD_ADDR, (long)offset,
+	       (unsigned long)(CONFIG_SYS_LOAD_ADDR + offset));
+	return map_sysmem(CONFIG_SYS_LOAD_ADDR + offset, 0);
 }
 
-void __weak reset_cpu(void)
+#define APMU_BASE 0xe6170000U
+#define CL0GRP3_BIT			BIT(3)
+#define CL1GRP3_BIT			BIT(7)
+#define RTGRP3_BIT			BIT(19)
+#define APMU_ACC_ENB_FOR_ARM_CPU	(CL0GRP3_BIT | CL1GRP3_BIT | RTGRP3_BIT)
+
+void s_init(void)
+{
+	if (soc_id != RZ_SOC_RCAR_V4H)
+		return;
+	/* Unlock CPG access */
+	writel(0x5A5AFFFF, CPGWPR);
+	writel(0xA5A50000, CPGWPCR);
+	init_generic_timer();
+
+	/* Define for Work Around of APMU */
+	writel(0x00ff00ff, APMU_BASE + 0x10);
+	writel(0x00ff00ff, APMU_BASE + 0x14);
+	writel(0x00ff00ff, APMU_BASE + 0x18);
+	writel(0x00ff00ff, APMU_BASE + 0x1c);
+	clrbits_le32(APMU_BASE + 0x68, BIT(29));
+}
+
+void reset_cpu(void)
 {
 }
 
 void __weak __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 {
+	if (soc_id != RZ_SOC_RCAR_V4H)
+		return;
+	printf("=== SPL: jumping to U-Boot proper at entry=0x%lx, size=0x%lx ===\n",
+	       (unsigned long)spl_image->entry_point,
+	       (unsigned long)spl_image->size);
 	typedef void __noreturn (*image_entry_noargs_t)(void);
 	image_entry_noargs_t image_entry =
 		(image_entry_noargs_t)spl_image->entry_point;
