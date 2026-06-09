@@ -17,7 +17,7 @@ endif
 # 64 bit SoCs
 ifdef CONFIG_RCAR_64
 ifdef CONFIG_XPL_BUILD
-obj-y	+= rcar64-spl.o
+# obj-y	+= rcar64-spl.o
 else ifndef CONFIG_RZ_CMN
 obj-y	+= rcar64-common.o
 else ifdef CONFIG_RCAR_GEN4

@@ -232,12 +232,12 @@ void spl_perform_board_fixups(struct spl_image_info *spl_image)
 	if (soc_id != RZ_SOC_RCAR_V4H)
 		return;
 
-	if (!renesas_v4h_sparrowhawk_is_evta1) {
-		if (board_id == BOARD_ID_RCAR_V4H_SPARROWHAWK)
-			printf("EVTB1 board detected (board_id=0x%lx)\n",
-			       (unsigned long)board_id);
-		return;
-	}
+	// if (!renesas_v4h_sparrowhawk_is_evta1) {
+	// 	if (board_id == BOARD_ID_RCAR_V4H_SPARROWHAWK)
+	// 		printf("EVTB1 board detected (board_id=0x%lx)\n",
+	// 		       (unsigned long)board_id);
+	// 	return;
+	// }
 
 	if (!blob)
 		return;
@@ -458,8 +458,11 @@ void reset_cpu(void)
 
 void __weak __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 {
+	printf("=== SPL: soc_id=0x%lx, entry=0x%lx ===\n",
+	       (unsigned long)soc_id, (unsigned long)spl_image->entry_point);
 	if (soc_id != RZ_SOC_RCAR_V4H)
 		return;
+	printf("=== SPL debug: 0x%08x\n", *(u32 *)0x44100000);
 	printf("=== SPL: jumping to U-Boot proper at entry=0x%lx, size=0x%lx ===\n",
 	       (unsigned long)spl_image->entry_point,
 	       (unsigned long)spl_image->size);
