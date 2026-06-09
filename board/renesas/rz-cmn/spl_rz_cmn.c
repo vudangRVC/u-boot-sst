@@ -6,8 +6,8 @@
  * Copyright (C) 2025 Marek Vasut <marek.vasut+renesas@mailbox.org>
  */
 
-#include <asm/arch/rcar-gen4-base.h>
 #include <asm/arch/renesas.h>
+#include <configs/rz-cmn.h>
 #include <asm/io.h>
 #include <compiler.h>
 #include <cpu_func.h>
@@ -60,10 +60,10 @@ static void init_generic_timer(void)
 	else
 		asm volatile("mcr p15, 0, %0, c14, c0, 0" :: "r" (freq));
 
-	writel(freq, CNTFID0);
+	writel(freq, CNTFID0_RCAR_GEN4);
 
 	/* Enable counter */
-	setbits_le32(CNTCR_BASE, CNTCR_EN);
+	setbits_le32(CNTCR_BASE_RCAR_GEN4, CNTCR_EN);
 }
 
 /* ---------- Sparrowhawk: platform settings ---------- */
@@ -440,8 +440,8 @@ void s_init(void)
 	if (soc_id != RZ_SOC_RCAR_V4H)
 		return;
 	/* Unlock CPG access */
-	writel(0x5A5AFFFF, CPGWPR);
-	writel(0xA5A50000, CPGWPCR);
+	writel(0x5A5AFFFF, CPGWPR_RCAR_GEN4);
+	writel(0xA5A50000, CPGWPCR_RCAR_GEN4);
 	init_generic_timer();
 
 	/* Define for Work Around of APMU */

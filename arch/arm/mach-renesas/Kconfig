@@ -17,77 +17,11 @@ config RCAR_64
 	imply OF_UPSTREAM
 	imply SUPPORT_EMMC_RPMB if MMC
 
-config RCAR_32
-	bool "Renesas ARM SoCs R-Car Gen1/Gen2 (32bit)"
-	default y if !RCAR_GEN3 && !RCAR_GEN4 && !RCAR_GEN5 && !RZA1 && !RZN1 && !RZG2L && !RZ_CMN
-	select CPU_V7A
-
-config RCAR_GEN3
-	bool "Renesas ARM SoCs R-Car Gen3 (64bit)"
-	select RCAR_64
-	select SUPPORT_SPL
-	select PINCTRL_PFC
-	imply SPL
-	imply SPL_BOARD_INIT
-	imply SPL_GZIP
-	imply SPL_LIBCOMMON_SUPPORT
-	imply SPL_LIBGENERIC_SUPPORT
-	imply SPL_SERIAL
-	imply SPL_SYS_MALLOC_SIMPLE
-	imply SPL_TINY_MEMSET
-	imply SPL_USE_TINY_PRINTF
-	imply SPL_YMODEM_SUPPORT
 
 config RCAR_GEN4
 	bool "Renesas ARM SoCs R-Car Gen4 (64bit)"
 	select RCAR_64
 	select PINCTRL_PFC
-
-config RCAR_GEN5
-	bool "Renesas ARM SoCs R-Car Gen5 (64bit)"
-	select RCAR_64
-	select PINCTRL_PFC
-
-config RZA1
-	bool "Renesas ARM SoCs RZ/A1 (32bit)"
-	select CPU_V7A
-
-config RZN1
-	bool "Renesas ARM SoCs RZ/N1 (32bit)"
-	select CPU_V7A
-	select ARMV7_SET_CORTEX_SMPEN if !SPL
-	select SPL_ARMV7_SET_CORTEX_SMPEN if SPL
-	select CLK
-	select CLK_RENESAS
-	select CLK_R9A06G032
-	select DM
-	select DM_ETH
-	select DM_SERIAL
-	select PINCTRL
-	select PINCONF
-	select REGMAP
-	select SYSRESET
-	select SYSRESET_SYSCON
-	imply CMD_DM
-
-config RZG2L
-	bool "Renesas RZ/G2L Family ARM SoCs"
-	select GICV3
-	select RCAR_64
-	imply CLK_RZG2L
-	imply MULTI_DTB_FIT
-	imply PINCTRL_RZG2L
-	imply RENESAS_RAVB
-	imply RENESAS_SDHI
-	imply RZG2L_GPIO
-	imply SCIF_CONSOLE
-	imply SYS_I2C_RZ_RIIC
-	imply SYS_MALLOC_F
-	help
-	  Enable support for the Renesas RZ/G2L family of SoCs. Currently
-	  support is only included for the RZ/G2L itself (based on the R9A07G044
-	  SoC). Support for additional SoCs in this family (RZ/G2LC, RZ/G2UL,
-	  RZ/V2L & RZ/Five) is not yet available.
 
 config RZ_CMN
 	bool "Renesas RZ/CMN Family ARM SoCs"
@@ -95,23 +29,6 @@ config RZ_CMN
 	select RCAR_64
 	select PINCTRL_PFC
 	select SUPPORT_SPL
-	imply CLK_RZG2L
-	imply MULTI_DTB_FIT
-	imply PINCTRL_RZG2L
-	imply RENESAS_RAVB
-	imply RENESAS_SDHI
-	imply RZG2L_GPIO
-	imply SCIF_CONSOLE
-	imply SYS_I2C_RZ_RIIC
-	imply SYS_MALLOC_F
-	imply SPL
-	imply SPL_BOARD_INIT
-	imply SPL_LIBCOMMON_SUPPORT
-	imply SPL_LIBGENERIC_SUPPORT
-	imply SPL_SERIAL
-	imply SPL_SYS_MALLOC_SIMPLE
-	imply SPL_TINY_MEMSET
-	imply SPL_USE_TINY_PRINTF
 	help
 		Enable support for boards based on Renesas RZ common SoCs.
 
@@ -127,5 +44,6 @@ source "arch/arm/mach-renesas/Kconfig.rza1"
 source "arch/arm/mach-renesas/Kconfig.rzn1"
 source "arch/arm/mach-renesas/Kconfig.rzg2l"
 source "arch/arm/mach-renesas/Kconfig.rzcmn"
+source "arch/arm/mach-renesas/Kconfig.rcar4"
 
 endif

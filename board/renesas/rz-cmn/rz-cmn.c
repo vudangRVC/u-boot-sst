@@ -41,8 +41,9 @@
 #include <linux/kconfig.h>
 #include <mach/renesas.h>
 #include <configs/rz-cmn.h>
-#include <mach/rcar-gen4-base.h>
 #include <string.h>
+
+#define CNTCR_EN	BIT(0)
 
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -535,10 +536,10 @@ static void init_generic_timer(void)
 
 	/* Update memory mapped and register based freqency */
 	asm volatile ("msr cntfrq_el0, %0" :: "r" (freq));
-	writel(freq, CNTFID0);
+	writel(freq, CNTFID0_RCAR_GEN4);
 
 	/* Enable counter */
-	setbits_le32(CNTCR_BASE, CNTCR_EN);
+	setbits_le32(CNTCR_BASE_RCAR_GEN4, CNTCR_EN);
 }
 
 void s_init_sparrow(void)
@@ -893,8 +894,8 @@ int board_early_init_f_sparrow(void)
 		return 0;
 	printf("=== U-Boot: board_early_init_f_sparrow (CPG unlock) ===\n");
 	/* Unlock CPG access */
-	writel(0x5A5AFFFF, CPGWPR);
-	writel(0xA5A50000, CPGWPCR);
+	writel(0x5A5AFFFF, CPGWPR_RCAR_GEN4);
+	writel(0xA5A50000, CPGWPCR_RCAR_GEN4);
 
 	return 0;
 }
@@ -930,14 +931,14 @@ static void init_gic_v3(void)
 		return;
 	printf("=== U-Boot: init_gic_v3 (GICR power on) ===\n");
 	/* GIC v3 power on */
-	writel(BIT(1), GICR_LPI_PWRR);
+	writel(BIT(1), GICR_LPI_PWRR_RCAR_GEN4);
 
 	/* Wait till the WAKER_CA_BIT changes to 0 */
-	clrbits_le32(GICR_LPI_WAKER, BIT(1));
-	while (readl(GICR_LPI_WAKER) & BIT(2))
+	clrbits_le32(GICR_LPI_WAKER_RCAR_GEN4, BIT(1));
+	while (readl(GICR_LPI_WAKER_RCAR_GEN4) & BIT(2))
 		;
 
-	writel(0xffffffff, GICR_SGI_BASE + GICR_IGROUPR0);
+	writel(0xffffffff, GICR_SGI_BASE_RCAR_GEN4 + GICR_IGROUPR0_RCAR_GEN4);
 }
 
 int board_init_sparrow(void)
@@ -954,7 +955,7 @@ int board_init_sparrow(void)
 	/* Enable RWDT reset on V3U in EL3 */
 	if (IS_ENABLED(CONFIG_R8A779A0) &&
 	    renesas_get_cpu_type() == RENESAS_CPU_TYPE_R8A779A0) {
-		writel(RST_RWDT, RST_WDTRSTCR);
+		writel(RST_RWDT_RCAR_GEN4, RST_WDTRSTCR_RCAR_GEN4);
 	}
 
 	return 0;
@@ -1148,7 +1149,7 @@ int board_late_init(void)
 }
 
 // Function to adjust DRAM bank sizes for 16 GiB devices, which have a different memory map than 8 GiB devices. Only applies to RZV2H V4H, as other SoCs don't support 16 GiB devices.
-#define RST_MODEMR0			0xe6160000
+#define RST_MODEMR0			RST_BASE_RCAR_GEN4
 
 DECLARE_GLOBAL_DATA_PTR;
 
