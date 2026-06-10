@@ -20,11 +20,16 @@ _start:
 	.word	0x0badc0d3;
 	.word	0x0badc0d3;
 #endif
-#endif
 
-#if IS_ENABLED(CONFIG_R8A779G0)
-
+#else
+	/*
+	 * Renesas SoC boot0 hook macro.
+	 * Runs at entry point _start in AArch32 mode (V4H) or AArch64 (others).
+	 * Must be called via #include (not bl) because V4H code is ARM32.
+	 */
+	.macro	do_boot0_hook
 #ifdef CONFIG_XPL_BUILD
+#if IS_ENABLED(CONFIG_R8A779G0)
 	/* r1=0xe6170800 */
 	.inst	0xe3a004e6	/* mov     r0,     #0xe6000000 */
 	.inst	0xe3801817	/* orr     r1, r0, #0x170000 */
@@ -92,8 +97,11 @@ _start:
 	.inst	0xe1a00000	/* nop                     @ (mov r0, r0) */
 	.inst	0xe1a00000	/* nop                     @ (mov r0, r0) */
 	/* Offset 0xa0 */
-#endif
-	b	reset
-#endif
+#else
+	/* Non-V4H (RZ/G2L, RZ/V2H, ...) */
+#endif /* CONFIG_R8A779G0 */
+#endif /* CONFIG_XPL_BUILD */
+	.endm
+#endif /* CONFIG_RCAR_GEN2 */
 
 #endif /* __BOOT0_H */
