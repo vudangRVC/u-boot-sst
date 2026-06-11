@@ -3,19 +3,6 @@
  */
 
 #include <dm/platform_data/serial_sh.h>
-
-/*
- * When a single (multi-DTB) binary must drive both the R-Car (Gen2/3/4) and
- * the RZ/G2L SCIF variants, their register offsets differ and cannot be
- * resolved at compile time. In that case select the register layout at runtime.
- */
-#if defined(CONFIG_RCAR_GEN4) && \
-	(defined(CONFIG_R9A07Gx) || defined(CONFIG_RZG2L) || \
-	 defined(CONFIG_R9A07G044L) || defined(CONFIG_R9A07G054L) || \
-	 defined(CONFIG_R9A07G043U) || defined(CONFIG_RZF_DEV))
-#define SCIF_RUNTIME_REGMAP
-#endif
-
 enum sci_regtype {
 	SCIx_REGTYPE_RCAR,	/* R-Car Gen2/3/4 SCIF/HSCIF layout */
 	SCIx_REGTYPE_RZG2L,	/* RZ/G2L SCIF layout */
@@ -348,7 +335,6 @@ static inline void sci_##name##_out(struct uart_port *port,\
 	CPU_SCIF_FNS(name, sh4_scif_offset, sh4_scif_size)
 #endif
 
-#ifndef SCIF_RUNTIME_REGMAP
 #if defined(CONFIG_CPU_SH7721)
 
 SCIF_FNS(SCSMR,  0x00, 16)
@@ -467,8 +453,6 @@ SCIF_FNS(HSSRR,				0,  0, 0x40, 16) /* HSCIF only */
 #define sci_in(port, reg) sci_##reg##_in(port)
 #define sci_out(port, reg, value) sci_##reg##_out(port, value)
 
-#else	/* SCIF_RUNTIME_REGMAP */
-
 enum sci_reg_idx {
 	SCIx_SCSMR, SCIx_SCBRR, SCIx_SCSCR, SCIx_SCxTDR, SCIx_SCxSR,
 	SCIx_SCxRDR, SCIx_SCFCR, SCIx_SCFDR, SCIx_SCSPTR, SCIx_SCLSR,
@@ -541,7 +525,6 @@ static inline void sci_serial_out(struct uart_port *port, enum sci_reg_idx idx,
 #define sci_in(port, reg)		sci_serial_in(port, SCIx_##reg)
 #define sci_out(port, reg, value)	sci_serial_out(port, SCIx_##reg, value)
 
-#endif	/* SCIF_RUNTIME_REGMAP */
 
 #if defined(CONFIG_CPU_SH7750)  || \
 	defined(CONFIG_CPU_SH7751)  || \

@@ -17,7 +17,6 @@ config RCAR_64
 	imply OF_UPSTREAM
 	imply SUPPORT_EMMC_RPMB if MMC
 
-
 config RCAR_GEN4
 	bool "Renesas ARM SoCs R-Car Gen4 (64bit)"
 	select RCAR_64
@@ -29,6 +28,23 @@ config RZ_CMN
 	select RCAR_64
 	select PINCTRL_PFC
 	select SUPPORT_SPL
+	imply CLK_RZG2L
+	imply MULTI_DTB_FIT
+	imply PINCTRL_RZG2L
+	imply RENESAS_RAVB
+	imply RENESAS_SDHI
+	imply RZG2L_GPIO
+	imply SCIF_CONSOLE
+	imply SYS_I2C_RZ_RIIC
+	imply SYS_MALLOC_F
+	imply SPL
+	imply SPL_BOARD_INIT
+	imply SPL_LIBCOMMON_SUPPORT
+	imply SPL_LIBGENERIC_SUPPORT
+	imply SPL_SERIAL
+	imply SPL_SYS_MALLOC_SIMPLE
+	imply SPL_TINY_MEMSET
+	imply SPL_USE_TINY_PRINTF
 	help
 		Enable support for boards based on Renesas RZ common SoCs.
 

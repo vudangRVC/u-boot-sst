@@ -19,8 +19,11 @@
 #include <reset.h>
 #include <serial.h>
 #include "serial_sh.h"
+#include <string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+extern u64 board_id;
+extern u64 soc_id;
 
 #if defined(CONFIG_CPU_SH7780)
 static int scif_rxfill(struct uart_port *port)
@@ -216,11 +219,17 @@ static int sh_serial_probe(struct udevice *dev)
 	priv->mapbase	= plat->base;
 	priv->type	= plat->type;
 	priv->clk_mode	= plat->clk_mode;
-#ifdef SCIF_RUNTIME_REGMAP
-	/* RZ/G2L SCIF is probed as SCIFA; everything else uses the R-Car layout */
-	priv->regtype	= (priv->type == PORT_SCIFA) ?
+
+	printf("== driver: soc_id=0x%lx, board_id=0x%lx\n", (unsigned long)soc_id, (unsigned long)board_id);
+
+	if (soc_id != RZ_SOC_RCAR_V4H) {
+		priv->regtype = (priv->type == PORT_SCIFA) ?
 				SCIx_REGTYPE_RZG2L : SCIx_REGTYPE_RCAR;
-#endif
+	}
+	printf("=== driver: sh_serial_probe for %s at 0x%lx, regtype=%d ===\n",
+	       (priv->type == PORT_SCI) ? "SCI" :
+	       (priv->type == PORT_SCIFA) ? "SCIFA" : "HSCIF",
+	       (unsigned long)plat->base, priv->regtype);	
 
 	/* De-assert the module reset if it is defined. */
 	ret = reset_get_by_index(dev, 0, &rst);
