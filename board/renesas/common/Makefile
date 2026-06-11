@@ -20,8 +20,6 @@ ifdef CONFIG_XPL_BUILD
 # obj-y	+= rcar64-spl.o
 else ifndef CONFIG_RZ_CMN
 obj-y	+= rcar64-common.o
-else ifdef CONFIG_RCAR_GEN4
-obj-y	+= rcar64-common.o
 endif
 
 ifdef CONFIG_RCAR_GEN3
