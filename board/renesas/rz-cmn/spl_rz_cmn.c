@@ -8,6 +8,7 @@
 
 #include <asm/arch/renesas.h>
 #include <configs/rz-cmn.h>
+#include <asm/arch/rcar-gen4-base.h>
 #include <asm/io.h>
 #include <compiler.h>
 #include <cpu_func.h>
