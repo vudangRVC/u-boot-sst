@@ -170,6 +170,11 @@ static void enable_caches_rzg2l(void)
 		rzg2l_mem_map[i].attrs = 0;
 		debug_memmap(i, rzg2l_mem_map);
 	}
+
+	if (!icache_status())
+		icache_enable();
+
+	dcache_enable();
 }
 
 static void enable_caches_gen3(void)
@@ -260,6 +265,11 @@ static void enable_caches_gen3(void)
 		gen3_mem_map[i].size = 0;
 		gen3_mem_map[i].attrs = 0;
 	}
+
+	if (!icache_status())
+		icache_enable();
+
+	dcache_enable();
 }
 
 void enable_caches(void)
@@ -268,11 +278,6 @@ void enable_caches(void)
 		enable_caches_gen3();
 	else
 		enable_caches_rzg2l();
-
-	if (!icache_status())
-		icache_enable();
-
-	dcache_enable();
 }
 
 int dram_init(void)

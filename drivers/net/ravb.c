@@ -25,6 +25,8 @@
 #include <asm/gpio.h>
 #include <reset.h>
 
+extern u64 soc_id;
+
 /* Registers */
 #define RAVB_REG_CCC		0x000
 #define RAVB_REG_DBAT		0x004
@@ -469,16 +471,18 @@ static int ravb_dmac_init(struct udevice *dev)
 	clrbits_le32(eth->iobase + RAVB_REG_CCC, CCC_BOC);
 
 #if defined(CONFIG_RZG2L) || defined (CONFIG_RZ_CMN)
-	/* AVB rx set */
-	writel(0x60000000, eth->iobase + RAVB_REG_RCR);
+	if (soc_id != RZ_SOC_RCAR_V4H) {
+		/* AVB rx set */
+		writel(0x60000000, eth->iobase + RAVB_REG_RCR);
 
-	/* Set Max Frame Length (RTC) */
-	writel(0x7ffc0000 | RAVB_RCV_BUFF_MAX, eth->iobase + RAVB_REG_RTC);
+		/* Set Max Frame Length (RTC) */
+		writel(0x7ffc0000 | RAVB_RCV_BUFF_MAX, eth->iobase + RAVB_REG_RTC);
 
-	/* FIFO size set */
-	writel(0x00222200, eth->iobase + RAVB_REG_TGC);
+		/* FIFO size set */
+		writel(0x00222200, eth->iobase + RAVB_REG_TGC);
 
-	writel(0, eth->iobase + RAVB_REG_TCCR);
+		writel(0, eth->iobase + RAVB_REG_TCCR);
+	}
 #endif
 
 	device_ops->dmac_init(dev);
@@ -563,8 +567,10 @@ static int ravb_config(struct udevice *dev)
 
 #if defined(CONFIG_RZG2L) || defined (CONFIG_RZ_CMN) || defined(CONFIG_R9A07G054L) || \
 	defined(CONFIG_R9A07G043U) || defined(CONFIG_RZF_DEV) || defined(CONFIG_R9A08G045S)
-	/* Configure TOE registers */
-	writel(CSR0_TPE | CSR0_RPE, eth->iobase + CSR0);
+	if (soc_id != RZ_SOC_RCAR_V4H) {
+		/* Configure TOE registers */
+		writel(CSR0_TPE | CSR0_RPE, eth->iobase + CSR0);
+	}
 #endif
 
 	ret = phy_startup(phy);
