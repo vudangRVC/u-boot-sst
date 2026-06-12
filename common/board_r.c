@@ -66,6 +66,7 @@
 #include <wdt.h>
 #include <asm-generic/gpio.h>
 #include <relocate.h>
+#include <configs/rz-cmn.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 

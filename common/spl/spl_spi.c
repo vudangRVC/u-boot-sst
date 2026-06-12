@@ -118,10 +118,9 @@ static int spl_spi_load_image(struct spl_image_info *spl_image,
 #endif
 
 	payload_offs = spl_spi_get_uboot_offs(flash);
-	if (CONFIG_IS_ENABLED(OF_REAL)) {
+	if (CONFIG_IS_ENABLED(OF_REAL))
 		payload_offs = ofnode_conf_read_int("u-boot,spl-payload-offset",
 						    payload_offs);
-	}
 
 	err = spl_load(spl_image, bootdev, &load, 0, payload_offs);
 	if (IS_ENABLED(CONFIG_SPI_FLASH_SOFT_RESET))

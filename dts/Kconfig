@@ -6,14 +6,14 @@ config SUPPORT_OF_CONTROL
 	bool
 
 config PYLIBFDT
-	bool
+	bool "Python library for libfdt"
 
 config DTOC
-	bool
+	bool "DTOC (Device Tree Compiler in Python)"
 	select PYLIBFDT
 
 config BINMAN
-	bool
+	bool "BINMAN firmware image generator"
 	select DTOC
 
 menu "Device Tree Control"
