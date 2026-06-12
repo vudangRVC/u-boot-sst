@@ -220,16 +220,10 @@ static int sh_serial_probe(struct udevice *dev)
 	priv->type	= plat->type;
 	priv->clk_mode	= plat->clk_mode;
 
-	printf("== driver: soc_id=0x%lx, board_id=0x%lx\n", (unsigned long)soc_id, (unsigned long)board_id);
-
 	if (soc_id != RZ_SOC_RCAR_V4H) {
 		priv->regtype = (priv->type == PORT_SCIFA) ?
 				SCIx_REGTYPE_RZG2L : SCIx_REGTYPE_RCAR;
 	}
-	printf("=== driver: sh_serial_probe for %s at 0x%lx, regtype=%d ===\n",
-	       (priv->type == PORT_SCI) ? "SCI" :
-	       (priv->type == PORT_SCIFA) ? "SCIFA" : "HSCIF",
-	       (unsigned long)plat->base, priv->regtype);	
 
 	/* De-assert the module reset if it is defined. */
 	ret = reset_get_by_index(dev, 0, &rst);

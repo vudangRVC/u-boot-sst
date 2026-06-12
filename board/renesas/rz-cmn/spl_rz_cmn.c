@@ -71,10 +71,8 @@ static void init_generic_timer(void)
 
 void spl_board_id_setup(void)
 {
-	if (soc_id == RZ_SOC_RCAR_V4H) {
-		printf("=== SPL: board_id=0 (V4H Sparrowhawk) ===\n");
+	if (soc_id == RZ_SOC_RCAR_V4H)
 		board_id = 0;
-	}
 }
 
 #ifndef CFG_SPL_PLATFORM_SETTINGS_OFFSET
@@ -98,8 +96,8 @@ static void read_platform_settings(struct spi_flash *flash)
 		return;
 	}
 
-	printf("SPL: platform: model_id=0x%x, model_string=%s, mfg=%s\n",
-	       pdesc.model_id, pdesc.model_string, pdesc.mfg_name);
+	printf("SPL: platform: model_id=0x%x, model_string=%s\n",
+	       pdesc.model_id, pdesc.model_string);
 	board_id = pdesc.model_id;
 }
 
@@ -212,15 +210,11 @@ unsigned int spl_spi_get_uboot_offs(struct spi_flash *flash)
 	if (soc_id != RZ_SOC_RCAR_V4H)
 		return 0;
 
-	printf("=== SPL: SPI flash probe done, reading platform settings ===\n");
 	read_platform_settings(flash);
 
 	renesas_v4h_sparrowhawk_is_evta1 = !memcmp(sf_ids_evta1, flash->info->id,
 						   sizeof(sf_ids_evta1));
-	printf("=== SPL: board is EVTA1: %s ===\n",
-	       renesas_v4h_sparrowhawk_is_evta1 ? "yes" : "no");
 
-	printf("=== SPL: U-Boot offset in SPI = 0x%x ===\n", CONFIG_SYS_SPI_U_BOOT_OFFS);
 	return CONFIG_SYS_SPI_U_BOOT_OFFS;
 }
 
@@ -341,8 +335,6 @@ void spl_perform_board_fixups(struct spl_image_info *spl_image)
 
 int board_fit_config_name_match(const char *name)
 {
-	printf("=== SPL: FIT config match for \"%s\", soc_id=0x%lx ===\n",
-	       name, (unsigned long)soc_id);
 	if (soc_id == RZ_SOC_RCAR_V4H)
 		return !strstr(name, "sparrow-hawk") ? -1 : 0;
 
@@ -376,8 +368,6 @@ void board_init_f(ulong dummy)
 	struct udevice *dev;
 	int ret;
 
-	printf("=== SPL: board_init_f entered ===\n");
-
 	if (CONFIG_IS_ENABLED(OF_CONTROL)) {
 		ret = spl_early_init();
 		if (ret) {
@@ -386,17 +376,11 @@ void board_init_f(ulong dummy)
 		}
 	}
 
-	printf("=== SPL: preloader_console_init ===\n");
 	preloader_console_init();
 
-	printf("=== SPL: spl_board_id_setup ===\n");
 	spl_board_id_setup();
 
-	printf("ATF boot args: board_id=0x%lx, soc_id=0x%lx\n",
-	       (unsigned long)board_id, (unsigned long)soc_id);
-
 	if (spl_board_needs_dbsc5_init()) {
-		printf("=== SPL: DBSC5 init (DDR re-initialization) ===\n");
 		ret = uclass_get_device_by_name(UCLASS_NOP, "ram@e6780000", &dev);
 		if (ret)
 			printf("DBSC5 init failed: %d\n", ret);
@@ -404,9 +388,6 @@ void board_init_f(ulong dummy)
 		ret = uclass_get_device_by_name(UCLASS_RAM, "ram@ffec0000", &dev);
 		if (ret)
 			printf("RTVRAM init failed: %d\n", ret);
-		printf("=== SPL: DBSC5 init done ===\n");
-	} else {
-		printf("=== SPL: DBSC5 init SKIPPED (ATF already init DDR) ===\n");
 	}
 };
 
@@ -416,7 +397,6 @@ void __weak spl_board_init(void)
 
 u32 spl_boot_device(void)
 {
-	printf("=== SPL: spl_boot_device -> BOOT_DEVICE_SPI ===\n");
 	return BOOT_DEVICE_SPI;
 }
 
@@ -424,9 +404,6 @@ struct legacy_img_hdr *spl_get_load_buffer(ssize_t offset, size_t size)
 {
 	if (soc_id != RZ_SOC_RCAR_V4H)
 		return NULL;
-	printf("=== SPL: load buffer at 0x%lx + 0x%lx = 0x%lx ===\n",
-	       (unsigned long)CONFIG_SYS_LOAD_ADDR, (long)offset,
-	       (unsigned long)(CONFIG_SYS_LOAD_ADDR + offset));
 	return map_sysmem(CONFIG_SYS_LOAD_ADDR + offset, 0);
 }
 
@@ -459,14 +436,8 @@ void reset_cpu(void)
 
 void __weak __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 {
-	printf("=== SPL: soc_id=0x%lx, entry=0x%lx ===\n",
-	       (unsigned long)soc_id, (unsigned long)spl_image->entry_point);
 	if (soc_id != RZ_SOC_RCAR_V4H)
 		return;
-	printf("=== SPL debug: 0x%08x\n", *(u32 *)0x44100000);
-	printf("=== SPL: jumping to U-Boot proper at entry=0x%lx, size=0x%lx ===\n",
-	       (unsigned long)spl_image->entry_point,
-	       (unsigned long)spl_image->size);
 	typedef void __noreturn (*image_entry_noargs_t)(void);
 	image_entry_noargs_t image_entry =
 		(image_entry_noargs_t)spl_image->entry_point;

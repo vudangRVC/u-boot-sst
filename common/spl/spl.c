@@ -700,7 +700,6 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	int ret, os;
 	void *fdt;
 
-	printf("=== SPL: board_init_r entered ===\n");
 	debug(">>" PHASE_PROMPT "board_init_r()\n");
 
 	spl_set_bd();
@@ -756,7 +755,6 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	if (CONFIG_IS_ENABLED(BOARD_INIT))
 		spl_board_init();
 
-	printf("=== SPL: board_init done, calling board_boot_order ===\n");
 	bootcount_inc();
 
 	/* Dump driver model states to aid analysis */
@@ -773,7 +771,6 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	spl_image.boot_device = BOOT_DEVICE_NONE;
 	board_boot_order(spl_boot_list);
 
-	printf("=== SPL: boot_from_devices ===\n");
 	ret = boot_from_devices(&spl_image, spl_boot_list,
 				ARRAY_SIZE(spl_boot_list));
 	if (ret) {
@@ -785,8 +782,6 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 		hang();
 	}
 
-	printf("=== SPL: boot OK, entry=0x%lx, os=%d ===\n",
-	       (unsigned long)spl_image.entry_point, spl_image.os);
 	spl_perform_arch_fixups(&spl_image);
 	spl_perform_board_fixups(&spl_image);
 
@@ -941,8 +936,6 @@ __weak void spl_relocate_stack_check(void)
  */
 ulong spl_relocate_stack_gd(void)
 {
-	printf("=== SPL: spl_relocate_stack_gd, CONFIG_SPL_STACK_R_ADDR=0x%lx ===\n",
-	       (unsigned long)CONFIG_SPL_STACK_R_ADDR);
 #if CONFIG_IS_ENABLED(STACK_R)
 	gd_t *new_gd;
 	ulong ptr = CONFIG_SPL_STACK_R_ADDR;
@@ -960,14 +953,11 @@ ulong spl_relocate_stack_gd(void)
 		gd->malloc_ptr = 0;
 	}
 #endif
-	printf("=== SPL: relocating stack + GD to 0x%lx ===\n",
-	       (unsigned long)(CONFIG_SPL_STACK_R_ADDR - roundup(sizeof(gd_t),16)));
 	/* Get stack position: use 8-byte alignment for ABI compliance */
 	ptr = CONFIG_SPL_STACK_R_ADDR - roundup(sizeof(gd_t),16);
 	gd->start_addr_sp = ptr;
 	new_gd = (gd_t *)ptr;
 	memcpy(new_gd, (void *)gd, sizeof(gd_t));
-	printf("=== SPL: GD copied, calling dm_fixup_for_gd_move ===\n");
 #if CONFIG_IS_ENABLED(DM)
 	dm_fixup_for_gd_move(new_gd);
 #endif
@@ -977,8 +967,6 @@ ulong spl_relocate_stack_gd(void)
 #if !defined(CONFIG_ARM) && !defined(CONFIG_RISCV)
 	gd = new_gd;
 #endif
-	printf("=== SPL: spl_relocate_stack_gd done, returning 0x%lx ===\n",
-	       (unsigned long)ptr);
 	return ptr;
 #else
 	return 0;

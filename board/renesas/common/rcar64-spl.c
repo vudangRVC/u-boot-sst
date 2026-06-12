@@ -8,19 +8,13 @@
 
 void __noreturn jump_to_image(struct spl_image_info *spl_image)
 {
-	printf("=== SPL: jump_to_image, entry=0x%lx, os=%d ===\n",
-	       (unsigned long)spl_image->entry_point, spl_image->os);
 	if (spl_image->os == IH_OS_ARM_TRUSTED_FIRMWARE) {
-		printf("=== SPL: jumping to ATF at 0x%lx ===\n",
-		       (unsigned long)spl_image->entry_point);
 		typedef void (*image_entry_arg_t)(int, int, int, int)
 			__attribute__ ((noreturn));
 		image_entry_arg_t image_entry =
 			(image_entry_arg_t)(uintptr_t) spl_image->entry_point;
 		image_entry(IH_MAGIC, CONFIG_SPL_TEXT_BASE, 0, 0);
 	} else {
-		printf("=== SPL: jumping to U-Boot at 0x%lx ===\n",
-		       (unsigned long)spl_image->entry_point);
 		typedef void __noreturn (*image_entry_noargs_t)(void);
 		image_entry_noargs_t image_entry =
 			(image_entry_noargs_t)spl_image->entry_point;

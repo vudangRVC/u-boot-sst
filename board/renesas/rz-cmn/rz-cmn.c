@@ -192,8 +192,6 @@ extern u64 soc_id;
 
 int board_fit_config_name_match(const char *name)
 {
-	printf("=== U-Boot: FIT config match for \"%s\", soc_id=0x%lx ===\n",
-	       name, (unsigned long)soc_id);
 	if (soc_id == RZ_SOC_RCAR_V4H)
 		return !strstr(name, "sparrow-hawk") ? -1 : 0;
 
@@ -546,10 +544,8 @@ void s_init_sparrow(void)
 {
 	if (soc_id != RZ_SOC_RCAR_V4H)
 		return;
-	printf("=== U-Boot: s_init_sparrow, current_el=%lu ===\n", (unsigned long)current_el());
 	if (current_el() == 3)
 		init_generic_timer();
-	printf("=== U-Boot: s_init_sparrow done ===\n");
 }
 
 void s_init_rzv2h(void)
@@ -892,7 +888,6 @@ int board_early_init_f_sparrow(void)
 {
 	if (soc_id != RZ_SOC_RCAR_V4H)
 		return 0;
-	printf("=== U-Boot: board_early_init_f_sparrow (CPG unlock) ===\n");
 	/* Unlock CPG access */
 	writel(0x5A5AFFFF, CPGWPR_RCAR_GEN4);
 	writel(0xA5A50000, CPGWPCR_RCAR_GEN4);
@@ -903,8 +898,6 @@ int board_early_init_f_sparrow(void)
 
 int board_early_init_f(void)
 {
-	// printf("=== U-Boot: board_early_init_f, board_id=0x%lx ===\n",
-	//        (unsigned long)board_id);
 	if (soc_id == RZ_SOC_RCAR_V4H) {
 		return board_early_init_f_sparrow();
 	}
@@ -929,7 +922,6 @@ static void init_gic_v3(void)
 {
 	if (soc_id != RZ_SOC_RCAR_V4H)
 		return;
-	printf("=== U-Boot: init_gic_v3 (GICR power on) ===\n");
 	/* GIC v3 power on */
 	writel(BIT(1), GICR_LPI_PWRR_RCAR_GEN4);
 
@@ -945,12 +937,9 @@ int board_init_sparrow(void)
 {
 	if (soc_id != RZ_SOC_RCAR_V4H)
 		return 0;
-	printf("=== U-Boot: board_init_sparrow, current_el=%lu ===\n",
-	       (unsigned long)current_el());
 	if (current_el() != 3)
 		return 0;
 	init_gic_v3();
-	printf("=== U-Boot: GICv3 initialized ===\n");
 
 	/* Enable RWDT reset on V3U in EL3 */
 	if (IS_ENABLED(CONFIG_R8A779A0) &&
@@ -963,8 +952,6 @@ int board_init_sparrow(void)
 
 int board_init(void)
 {
-	printf("=== U-Boot: board_init, board_id=0x%lx ===\n",
-	       (unsigned long)board_id);
 	/* adress of boot parameters */
 	gd->bd->bi_boot_params = CONFIG_TEXT_BASE + 0x50000;
 
@@ -1087,18 +1074,13 @@ int rzv2h_board_pmic_i2c_init(void)
 }
 __weak int ft_board_setup(void *blob, struct bd_info *bd)
 {
-    printf("=== U-Boot: ft_board_setup (weak) ===\n");
     return 0;
 }
 
 int board_late_init(void)
 {
-	printf("=== U-Boot: board_late_init, soc_id=0x%lx, board_id=0x%lx ===\n",
-	       (unsigned long)soc_id, (unsigned long)board_id);
-	if (soc_id == RZ_SOC_RCAR_V4H) {
-		printf("=== U-Boot: board_late_init done (V4H returns early) ===\n");
+	if (soc_id == RZ_SOC_RCAR_V4H)
 		return 0;
-	}
 
 	if(board_id == BOARD_ID_RZG2L_SBC)
 	{
@@ -1162,27 +1144,15 @@ void renesas_dram_init_banksize(void)
 	int bank;
 
 	/* 8 GiB device, do nothing. */
-	if (!((renesas_get_cpu_rev_integer() >= 3) && (modemr0 & BIT(19)))) {
-		printf("=== U-Boot: 8GiB DRAM detected ===\n");
+	if (!((renesas_get_cpu_rev_integer() >= 3) && (modemr0 & BIT(19))))
 		return;
-	}
 
 	/* 16 GiB device, adjust memory map. */
-	printf("=== U-Boot: 16GiB DRAM detected, adjusting banks ===\n");
 	for (bank = 0; bank < CONFIG_NR_DRAM_BANKS; bank++) {
-		printf("  bank %d: start=0x%llx, size=0x%llx",
-		       bank,
-		       (unsigned long long)gd->bd->bi_dram[bank].start,
-		       (unsigned long long)gd->bd->bi_dram[bank].size);
-		if (gd->bd->bi_dram[bank].start == 0x480000000ULL) {
+		if (gd->bd->bi_dram[bank].start == 0x480000000ULL)
 			gd->bd->bi_dram[bank].size = 0x180000000ULL;
-			printf(" -> adjusted to 0x180000000");
-		}
-		if (gd->bd->bi_dram[bank].start == 0x600000000ULL) {
+		if (gd->bd->bi_dram[bank].start == 0x600000000ULL)
 			gd->bd->bi_dram[bank].size = 0x200000000ULL;
-			printf(" -> adjusted to 0x200000000");
-		}
-		printf("\n");
 	}
 }
 
@@ -1203,7 +1173,6 @@ void board_cleanup_before_linux(void)
 	if (!IS_ENABLED(CONFIG_PCI_RCAR_GEN4))
 		return;
 
-	printf("=== U-Boot: board_cleanup_before_linux (PCIe reset) ===\n");
 	/* Set cold and application reset for both PCIe cores */
 	writel(SRCR_PCIEC0_PWR_RESET | SRCR_PCIEC1_PWR_RESET, SRCR6);
 	readl(SRCR6);
@@ -1215,14 +1184,12 @@ void board_cleanup_before_linux(void)
 	readl(SRSTCLR6);
 	writel(SRCR_PCIEC0_APP_RESET | SRCR_PCIEC1_APP_RESET, SRSTCLR11);
 	readl(SRSTCLR11);
-	printf("=== U-Boot: board_cleanup_before_linux done ===\n");
 }
 
 
 
 static int last_stage_init(void)
 {
-	printf("=== U-Boot: last_stage_init ===\n");
 	if(board_id == BOARD_ID_RZG2L_SBC)
 	{
 		configure_gpy111_phys();

@@ -770,15 +770,10 @@ static int spl_simple_fit_read(struct spl_fit_info *ctx,
 
 static int spl_simple_fit_parse(struct spl_fit_info *ctx)
 {
-	printf("=== SPL: spl_simple_fit_parse ===\n");
 	/* Find the correct subnode under "/configurations" */
 	ctx->conf_node = fit_find_config_node(ctx->fit);
-	if (ctx->conf_node < 0) {
-		printf("=== SPL: fit_find_config_node returned %d ===\n",
-		       ctx->conf_node);
+	if (ctx->conf_node < 0)
 		return -EINVAL;
-	}
-	printf("=== SPL: FIT config node found ===\n");
 
 	if (IS_ENABLED(CONFIG_SPL_FIT_SIGNATURE)) {
 		printf("## Checking hash(es) for config %s ... ",
@@ -809,14 +804,9 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 	int index = 0;
 	int firmware_node;
 
-	printf("=== SPL: spl_simple_fit_read at offset 0x%lx ===\n",
-	       (unsigned long)offset);
 	ret = spl_simple_fit_read(&ctx, info, offset, fit);
-	if (ret < 0) {
-		printf("=== SPL: FIT read failed: %d ===\n", ret);
+	if (ret < 0)
 		return ret;
-	}
-	printf("=== SPL: FIT read OK ===\n");
 
 	/* skip further processing if requested to enable load-only use cases */
 	if (spl_load_simple_fit_skip_processing())
@@ -949,11 +939,6 @@ int spl_load_simple_fit(struct spl_image_info *spl_image,
 	upl_set_fit_info(map_to_sysmem(ctx.fit), ctx.conf_node,
 			 spl_image->entry_point);
 
-	printf("=== SPL: FIT load done: entry=0x%lx, load=0x%lx, size=0x%lx, fdt=0x%lx ===\n",
-	       (unsigned long)spl_image->entry_point,
-	       (unsigned long)spl_image->load_addr,
-	       (unsigned long)spl_image->size,
-	       (unsigned long)spl_image->fdt_addr);
 	return 0;
 }
 

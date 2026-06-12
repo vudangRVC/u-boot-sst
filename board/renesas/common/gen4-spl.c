@@ -59,8 +59,6 @@ void board_init_f(ulong dummy)
 	struct udevice *dev;
 	int ret;
 
-	printf("=== SPL: board_init_f entered ===\n");
-
 	if (CONFIG_IS_ENABLED(OF_CONTROL)) {
 		ret = spl_early_init();
 		if (ret) {
@@ -69,17 +67,11 @@ void board_init_f(ulong dummy)
 		}
 	}
 
-	printf("=== SPL: preloader_console_init ===\n");
 	preloader_console_init();
 
-	printf("=== SPL: spl_board_id_setup ===\n");
 	spl_board_id_setup();
 
-	printf("ATF boot args: board_id=0x%lx, soc_id=0x%lx\n",
-	       (unsigned long)board_id, (unsigned long)soc_id);
-
 	if (spl_board_needs_dbsc5_init()) {
-		printf("=== SPL: DBSC5 init (DDR re-initialization) ===\n");
 		ret = uclass_get_device_by_name(UCLASS_NOP, "ram@e6780000", &dev);
 		if (ret)
 			printf("DBSC5 init failed: %d\n", ret);
@@ -87,23 +79,16 @@ void board_init_f(ulong dummy)
 		ret = uclass_get_device_by_name(UCLASS_RAM, "ram@ffec0000", &dev);
 		if (ret)
 			printf("RTVRAM init failed: %d\n", ret);
-		printf("=== SPL: DBSC5 init done ===\n");
-	} else {
-		printf("=== SPL: DBSC5 init SKIPPED (ATF already init DDR) ===\n");
 	}
 };
 
 u32 spl_boot_device(void)
 {
-	printf("=== SPL: spl_boot_device -> BOOT_DEVICE_SPI ===\n");
 	return BOOT_DEVICE_SPI;
 }
 
 struct legacy_img_hdr *spl_get_load_buffer(ssize_t offset, size_t size)
 {
-	printf("=== SPL: load buffer at 0x%lx + 0x%lx = 0x%lx ===\n",
-	       (unsigned long)CONFIG_SYS_LOAD_ADDR, (long)offset,
-	       (unsigned long)(CONFIG_SYS_LOAD_ADDR + offset));
 	return map_sysmem(CONFIG_SYS_LOAD_ADDR + offset, 0);
 }
 
