@@ -35,6 +35,16 @@
 #include <wdt.h>
 #include <rzg2l_wdt.h>
 #endif
+#include <asm/io.h>
+#include <asm/global_data.h>
+#include <linux/bitops.h>
+#include <linux/kconfig.h>
+#include <mach/renesas.h>
+#include <configs/rz-cmn.h>
+#include <string.h>
+
+#define CNTCR_EN	BIT(0)
+
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -179,6 +189,21 @@ DECLARE_GLOBAL_DATA_PTR;
 extern u64 rcar_atf_boot_args[];
 extern u64 board_id;
 extern u64 soc_id;
+
+int board_fit_config_name_match(const char *name)
+{
+	if (soc_id == RZ_SOC_RCAR_V4H)
+		return !strstr(name, "sparrow-hawk") ? -1 : 0;
+
+	if (soc_id == RZ_SOC_RZV2H)
+		return !strstr(name, "rzv2h") ? -1 : 0;
+
+	if (soc_id == RZ_SOC_RZG2L || soc_id == RZ_SOC_RZV2L)
+		return !strstr(name, "rzg2l") && !strstr(name, "rzv2l") &&
+		       !strstr(name, "rs-g2l") ? -1 : 0;
+
+	return -1;
+}
 
 /* Platform descriptor */
 typedef struct __attribute__((packed)) platform_desc {
@@ -501,6 +526,28 @@ cleanup:
 	return ret;
 }
 
+static void init_generic_timer(void)
+{
+	if (soc_id != RZ_SOC_RCAR_V4H)
+		return;
+	const u32 freq = CONFIG_SYS_CLK_FREQ;
+
+	/* Update memory mapped and register based freqency */
+	asm volatile ("msr cntfrq_el0, %0" :: "r" (freq));
+	writel(freq, CNTFID0_RCAR_GEN4);
+
+	/* Enable counter */
+	setbits_le32(CNTCR_BASE_RCAR_GEN4, CNTCR_EN);
+}
+
+void s_init_sparrow(void)
+{
+	if (soc_id != RZ_SOC_RCAR_V4H)
+		return;
+	if (current_el() == 3)
+		init_generic_timer();
+}
+
 void s_init_rzv2h(void)
 {
 	*(volatile u32 *)RZV2H_PWPR |= (RZV2H_PWPR_REGWE_A | RZV2H_PWPR_REGWE_B);
@@ -628,15 +675,20 @@ static void s_init_rzg2l_sbc(void)
 
 void s_init(void)
 {
+	// printf("=== U-Boot: s_init, board_id=0x%lx, soc_id=0x%lx ===\n",
+	//        (unsigned long)board_id, (unsigned long)soc_id);
 	if (board_id == BOARD_ID_RZV2H_EVK || board_id == BOARD_ID_RZV2H_RDK || board_id == BOARD_ID_IMDT_V2H_SBC) {
 		s_init_rzv2h();
 	} else if (board_id == BOARD_ID_RZG2L_SBC) {
 		s_init_rzg2l_sbc();
 	} else if (board_id == BOARD_ID_RZV2L_EVK || board_id == BOARD_ID_RZG2L_EVK || board_id == BOARD_ID_RS_G2L100) {
 		s_init_rzg2l();
+	} else if (board_id == BOARD_ID_RCAR_V4H_SPARROWHAWK) {
+		s_init_sparrow();
 	} else {
 		return;
 	}
+	// printf("=== U-Boot: s_init done ===\n");
 }
 
 static void rzv2h_usbphy_init(void)
@@ -832,8 +884,24 @@ pmic_failed:
 	return;
 }
 
+int board_early_init_f_sparrow(void)
+{
+	if (soc_id != RZ_SOC_RCAR_V4H)
+		return 0;
+	/* Unlock CPG access */
+	writel(0x5A5AFFFF, CPGWPR_RCAR_GEN4);
+	writel(0xA5A50000, CPGWPCR_RCAR_GEN4);
+
+	return 0;
+}
+
+
 int board_early_init_f(void)
 {
+	if (soc_id == RZ_SOC_RCAR_V4H) {
+		return board_early_init_f_sparrow();
+	}
+
 	s_init();
 	return 0;
 }
@@ -849,6 +917,39 @@ int board_mmc_init(struct bd_info *bis)
 		return -1;
 }
 
+
+static void init_gic_v3(void)
+{
+	if (soc_id != RZ_SOC_RCAR_V4H)
+		return;
+	/* GIC v3 power on */
+	writel(BIT(1), GICR_LPI_PWRR_RCAR_GEN4);
+
+	/* Wait till the WAKER_CA_BIT changes to 0 */
+	clrbits_le32(GICR_LPI_WAKER_RCAR_GEN4, BIT(1));
+	while (readl(GICR_LPI_WAKER_RCAR_GEN4) & BIT(2))
+		;
+
+	writel(0xffffffff, GICR_SGI_BASE_RCAR_GEN4 + GICR_IGROUPR0_RCAR_GEN4);
+}
+
+int board_init_sparrow(void)
+{
+	if (soc_id != RZ_SOC_RCAR_V4H)
+		return 0;
+	if (current_el() != 3)
+		return 0;
+	init_gic_v3();
+
+	/* Enable RWDT reset on V3U in EL3 */
+	if (IS_ENABLED(CONFIG_R8A779A0) &&
+	    renesas_get_cpu_type() == RENESAS_CPU_TYPE_R8A779A0) {
+		writel(RST_RWDT_RCAR_GEN4, RST_WDTRSTCR_RCAR_GEN4);
+	}
+
+	return 0;
+}
+
 int board_init(void)
 {
 	/* adress of boot parameters */
@@ -862,15 +963,13 @@ int board_init(void)
 		board_usb_init_rzv2h();
 		/* Initialize PMIC I2C devices */
 		board_pmic_i2c_init();
+	} else if (soc_id == RZ_SOC_RCAR_V4H) {
+		return board_init_sparrow();
 	}
 
 	return 0;
 }
 
-int ft_board_setup(void *blob, struct bd_info *bd)
-{
-	return 0;
-}
 
 void reset_cpu(void)
 {
@@ -973,8 +1072,16 @@ int rzv2h_board_pmic_i2c_init(void)
 
 	return ret;
 }
+__weak int ft_board_setup(void *blob, struct bd_info *bd)
+{
+    return 0;
+}
+
 int board_late_init(void)
 {
+	if (soc_id == RZ_SOC_RCAR_V4H)
+		return 0;
+
 	if(board_id == BOARD_ID_RZG2L_SBC)
 	{
 		uchar enetaddrs[ETH_ALEN * 2];
@@ -1023,8 +1130,66 @@ int board_late_init(void)
 	return 0;
 }
 
+// Function to adjust DRAM bank sizes for 16 GiB devices, which have a different memory map than 8 GiB devices. Only applies to RZV2H V4H, as other SoCs don't support 16 GiB devices.
+#define RST_MODEMR0			RST_BASE_RCAR_GEN4
+
+DECLARE_GLOBAL_DATA_PTR;
+
+void renesas_dram_init_banksize(void)
+{
+	if (soc_id != RZ_SOC_RCAR_V4H)
+		return;
+
+	const u32 modemr0 = readl(RST_MODEMR0);
+	int bank;
+
+	/* 8 GiB device, do nothing. */
+	if (!((renesas_get_cpu_rev_integer() >= 3) && (modemr0 & BIT(19))))
+		return;
+
+	/* 16 GiB device, adjust memory map. */
+	for (bank = 0; bank < CONFIG_NR_DRAM_BANKS; bank++) {
+		if (gd->bd->bi_dram[bank].start == 0x480000000ULL)
+			gd->bd->bi_dram[bank].size = 0x180000000ULL;
+		if (gd->bd->bi_dram[bank].start == 0x600000000ULL)
+			gd->bd->bi_dram[bank].size = 0x200000000ULL;
+	}
+}
+
+#define SRCR6			0xe6152c18
+#define SRCR11			0xe6152c2c
+#define SRSTCLR6		0xe6152c98
+#define SRSTCLR11		0xe6152cac
+#define SRCR_PCIEC0_PWR_RESET	BIT(24)
+#define SRCR_PCIEC1_PWR_RESET	BIT(25)
+#define SRCR_PCIEC0_APP_RESET	BIT(21)
+#define SRCR_PCIEC1_APP_RESET	BIT(22)
+
+void board_cleanup_before_linux(void)
+{
+	if (soc_id != RZ_SOC_RCAR_V4H)
+		return;
+
+	if (!IS_ENABLED(CONFIG_PCI_RCAR_GEN4))
+		return;
+
+	/* Set cold and application reset for both PCIe cores */
+	writel(SRCR_PCIEC0_PWR_RESET | SRCR_PCIEC1_PWR_RESET, SRCR6);
+	readl(SRCR6);
+	writel(SRCR_PCIEC0_APP_RESET | SRCR_PCIEC1_APP_RESET, SRCR11);
+	readl(SRCR11);
+
+	/* Clear cold and application reset for both PCIe cores */
+	writel(SRCR_PCIEC0_PWR_RESET | SRCR_PCIEC1_PWR_RESET, SRSTCLR6);
+	readl(SRSTCLR6);
+	writel(SRCR_PCIEC0_APP_RESET | SRCR_PCIEC1_APP_RESET, SRSTCLR11);
+	readl(SRSTCLR11);
+}
+
+
+
 static int last_stage_init(void)
-{	
+{
 	if(board_id == BOARD_ID_RZG2L_SBC)
 	{
 		configure_gpy111_phys();

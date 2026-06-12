@@ -13,3 +13,19 @@ config SYS_CONFIG_NAME
 	default "rz-cmn"
 
 endif
+
+if TARGET_SPARROWHAWK
+
+config SYS_SOC
+	default "renesas" if RCAR_GEN4
+
+config SYS_BOARD
+	default "rz-cmn"
+
+config SYS_VENDOR
+	default "renesas"
+
+config SYS_CONFIG_NAME
+	default "sparrowhawk"
+
+endif
