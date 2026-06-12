@@ -22,6 +22,7 @@
 #include "rcar3.h"
 #include <asm/io.h>
 #include "rza.h"
+#include <configs/rz-cmn.h>
 
 /*
  *		image of renesas_usbhs

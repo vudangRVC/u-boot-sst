@@ -19,8 +19,10 @@
 #include <reset.h>
 #include <serial.h>
 #include "serial_sh.h"
+#include <string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
+extern u64 soc_id;
 
 #if defined(CONFIG_CPU_SH7780)
 static int scif_rxfill(struct uart_port *port)
@@ -59,7 +61,7 @@ static void sh_serial_init_generic(struct uart_port *port)
 	sci_out(port, SCSPTR, 0x0003);
 #endif
 
-#if IS_ENABLED(CONFIG_RCAR_GEN2) || IS_ENABLED(CONFIG_RCAR_GEN3) || IS_ENABLED(CONFIG_RCAR_GEN4)
+#if IS_ENABLED(CONFIG_RCAR_GEN2) || IS_ENABLED(CONFIG_RCAR_GEN3) || IS_ENABLED(CONFIG_RCAR_GEN4) || IS_ENABLED(CONFIG_TARGET_SPARROWHAWK)
 	if (port->type == PORT_HSCIF)
 		sci_out(port, HSSRR, HSSRR_SRE | HSSRR_SRCYC8);
 #endif
@@ -216,6 +218,11 @@ static int sh_serial_probe(struct udevice *dev)
 	priv->mapbase	= plat->base;
 	priv->type	= plat->type;
 	priv->clk_mode	= plat->clk_mode;
+
+	if (soc_id != RZ_SOC_RCAR_V4H) {
+		priv->regtype = (priv->type == PORT_SCIFA) ?
+				SCIx_REGTYPE_RZG2L : SCIx_REGTYPE_RCAR;
+	}
 
 	/* De-assert the module reset if it is defined. */
 	ret = reset_get_by_index(dev, 0, &rst);
