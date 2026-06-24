@@ -44,8 +44,12 @@
 /* Generic Interrupt Controller Definitions */
 /* RZ/G2L use GIC-v3 */
 // #define CONFIG_GICV3
+#ifndef GICD_BASE
 #define GICD_BASE	0x11900000
+#endif
+#ifndef GICR_BASE
 #define GICR_BASE	0x11960000
+#endif
 
 /* console */
 // #define CONFIG_SYS_CBSIZE		2048

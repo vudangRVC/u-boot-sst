@@ -4,18 +4,21 @@ menu "Select Target SoC"
 
 config R8A779A0
 	bool "Renesas SoC R8A779A0"
+	default y if TARGET_FALCON
 	select GICV3
 	imply CLK_R8A779A0
 	imply PINCTRL_PFC_R8A779A0
 
 config R8A779F0
 	bool "Renesas SoC R8A779F0"
+	default y if TARGET_SPIDER || TARGET_S4SK
 	select GICV3
 	imply CLK_R8A779F0
 	imply PINCTRL_PFC_R8A779F0
 
 config R8A779G0
 	bool "Renesas SoC R8A779G0"
+	default y if TARGET_WHITEHAWK || TARGET_SPARROWHAWK
 	select GICV3
 	select BINMAN
 	select SUPPORT_SPL
@@ -32,53 +35,42 @@ config R8A779G0
 
 config R8A779H0
 	bool "Renesas SoC R8A779H0"
+	default y if TARGET_GRAYHAWK
 	select GICV3
 	imply CLK_R8A779H0
 	imply PINCTRL_PFC_R8A779H0
 
 endmenu
 
-choice
-	prompt "Renesas ARM64 SoCs board select"
-	optional
-
 config TARGET_FALCON
 	bool "Falcon board"
-	imply R8A779A0
 	help
           Support for Renesas R-Car Gen3 Falcon platform
 
 config TARGET_SPIDER
 	bool "Spider board"
-	imply R8A779F0
 	help
 	  Support for Renesas R-Car Gen4 Spider platform
 
 config TARGET_S4SK
 	bool "S4SK board"
-	imply R8A779F0
 	help
 	  Support for Renesas R-Car Gen4 S4SK platform
 
 config TARGET_WHITEHAWK
 	bool "White Hawk board"
-	imply R8A779G0
 	help
 	  Support for Renesas R-Car Gen4 White Hawk platform
 
 config TARGET_SPARROWHAWK
 	bool "Sparrow Hawk board"
-	imply R8A779G0
 	help
 	  Support for Renesas R-Car Gen4 Sparrow Hawk platform
 
 config TARGET_GRAYHAWK
 	bool "Gray Hawk board"
-	imply R8A779H0
 	help
 	  Support for Renesas R-Car Gen4 Gray Hawk platform
-
-endchoice
 
 source "board/renesas/falcon/Kconfig"
 source "board/renesas/spider/Kconfig"

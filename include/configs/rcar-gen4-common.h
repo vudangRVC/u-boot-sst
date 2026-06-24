@@ -16,12 +16,18 @@
 
 /* Memory */
 #define DRAM_RSV_SIZE			0x08000000
+#ifndef CFG_SYS_SDRAM_BASE
 #define CFG_SYS_SDRAM_BASE		(0x40000000 + DRAM_RSV_SIZE)
+#endif
+#ifndef CFG_SYS_SDRAM_SIZE
 #define CFG_SYS_SDRAM_SIZE		(0x80000000u - DRAM_RSV_SIZE)
+#endif
 #define CFG_MAX_MEM_MAPPED		(0x80000000u - DRAM_RSV_SIZE)
 
 /* Environment setting */
+#ifndef CFG_EXTRA_ENV_SETTINGS
 #define CFG_EXTRA_ENV_SETTINGS		\
 	"bootm_size=0x10000000\0"
+#endif
 
 #endif	/* __RCAR_GEN4_COMMON_H */

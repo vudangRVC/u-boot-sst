@@ -18,8 +18,10 @@
 #endif
 
 #ifdef CONFIG_SPL_BUILD
+#ifndef SCIF0_BASE
 /* SPL stub - serial base for build only, SPL never runs on this board */
 #define SCIF0_BASE	0x1004b800
+#endif
 #endif
 
 /* RZ board id defines, it will be used to compare with the parameter

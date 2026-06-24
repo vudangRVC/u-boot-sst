@@ -543,7 +543,6 @@ void fastboot_mmc_erase(const char *cmd, char *response)
 {
 	struct blk_desc *dev_desc;
 	struct disk_partition info;
-	lbaint_t blks, blks_start, blks_size, grp_size;
 	struct mmc *mmc = find_mmc_device(fastboot_mmc_get_devnum());
 
 #ifdef CONFIG_FASTBOOT_MMC_BOOT_SUPPORT

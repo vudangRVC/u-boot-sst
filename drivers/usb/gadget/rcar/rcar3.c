@@ -42,7 +42,7 @@ void usbhs_write32(struct usbhs_priv *priv, u32 reg, u32 data)
 	writel(data, priv->base + reg);
 }
 
-static u32 usbhs_read32(struct usbhs_priv *priv, u32 reg)
+static __maybe_unused u32 usbhs_read32(struct usbhs_priv *priv, u32 reg)
 {
 	return readl(priv->base + reg);
 }

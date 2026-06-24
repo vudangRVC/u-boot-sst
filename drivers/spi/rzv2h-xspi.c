@@ -231,7 +231,7 @@ static int xspi_claim_bus(struct udevice *dev)
 	return 0;
 }
 
-static int xspi_release_bus(struct udevice *dev)
+static __maybe_unused int xspi_release_bus(struct udevice *dev)
 {
 	/* This is a SPI NOR controller, do nothing. */
 	return 0;

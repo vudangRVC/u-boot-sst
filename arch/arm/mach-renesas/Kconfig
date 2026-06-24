@@ -49,11 +49,11 @@ config RCAR_GEN5
 	select PINCTRL_PFC
 
 config RZA1
-	prompt "Renesas ARM SoCs RZ/A1 (32bit)"
+	bool "Renesas ARM SoCs RZ/A1 (32bit)"
 	select CPU_V7A
 
 config RZN1
-	prompt "Renesas ARM SoCs RZ/N1 (32bit)"
+	bool "Renesas ARM SoCs RZ/N1 (32bit)"
 	select CPU_V7A
 	select ARMV7_SET_CORTEX_SMPEN if !SPL
 	select SPL_ARMV7_SET_CORTEX_SMPEN if SPL
@@ -71,7 +71,7 @@ config RZN1
 	imply CMD_DM
 
 config RZG2L
-	prompt "Renesas RZ/G2L Family ARM SoCs"
+	bool "Renesas RZ/G2L Family ARM SoCs"
 	select GICV3
 	select RCAR_64
 	imply CLK_RZG2L

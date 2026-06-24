@@ -434,7 +434,7 @@ void reset_cpu(void)
 {
 }
 
-void __weak __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
+void __weak jump_to_image_no_args(struct spl_image_info *spl_image)
 {
 	if (soc_id != RZ_SOC_RCAR_V4H)
 		return;

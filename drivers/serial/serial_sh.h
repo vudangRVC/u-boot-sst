@@ -522,6 +522,8 @@ static inline void sci_serial_out(struct uart_port *port, enum sci_reg_idx idx,
 		writew(value, port->membase + r->offset);
 }
 
+#undef sci_in
+#undef sci_out
 #define sci_in(port, reg)		sci_serial_in(port, SCIx_##reg)
 #define sci_out(port, reg, value)	sci_serial_out(port, SCIx_##reg, value)
 
