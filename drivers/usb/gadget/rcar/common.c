@@ -1,28 +1,23 @@
+// SPDX-License-Identifier: GPL-1.0+
 /*
  * Renesas USB driver
  *
  * Copyright (C) 2011 Renesas Solutions Corp.
+ * Copyright (C) 2019 Renesas Electronics Corporation
  * Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
- *
- * Ported to u-boot
- * Copyright (C) 2016 GlobalLogic
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
- *
  */
-#include <linux/err.h>
-#include "common.h"
-#include "rcar3.h"
+
 #include <asm/io.h>
-#include "rza.h"
-#include <configs/rz-cmn.h>
+#include <clk.h>
+#include <dm.h>
+#include <errno.h>
+#include <generic-phy.h>
+#include <linux/err.h>
+#include <linux/usb/ch9.h>
+#include <linux/usb/gadget.h>
+#include <usb.h>
+
+#include "common.h"
 
 /*
  *		image of renesas_usbhs
@@ -46,75 +41,17 @@
  *			| ....  |	+-----------+
  */
 
-#define USBHSF_RUNTIME_PWCTRL	(1 << 0)
-
-/* status */
-#define usbhsc_flags_init(p)   do {(p)->flags = 0; } while (0)
-#define usbhsc_flags_set(p, b) ((p)->flags |=  (b))
-#define usbhsc_flags_clr(p, b) ((p)->flags &= ~(b))
-#define usbhsc_flags_has(p, b) ((p)->flags &   (b))
-
-extern u64 soc_id;
-
-/*
- * platform call back
- *
- * renesas usb support platform callback function.
- * Below macro call it.
- * if platform doesn't have callback, it return 0 (no error)
- */
-#define usbhs_platform_call(priv, func, args...)\
-	(!(priv) ? -ENODEV :			\
-	 !((priv)->pfunc.func) ? 0 :		\
-	 (priv)->pfunc.func(args))
-
-struct usbhs_regname {
-	u32		regaddr;	/*Address of the usbhs register */
-	const char *regname;	/*String Name of the register*/
-} ;
-
-/*Structure for debugfs to set the register name by the address*/
-static const struct usbhs_regname usbhs_regnames[] = {
-	{ 0x0,  "SYSCFG" }, { 0x2,  "BUSWAIT" }, { 0x4,  "SYSSTS" },
-	{ 0x8,  "DVSTCTR"},	{ 0xC,  "TESTMODE" }, { 0x14,  "CFIFO" },
-	{ 0x20,  "CFIFOSEL" }, { 0x22, "CFIFOCTR" }, { 0x28,  "D0FIFOSEL" },
-	{ 0x2A,  "D0FIFOCTR" }, { 0x2C,  "D1FIFOSEL"}, { 0x2E,  "D1FIFOCTR" },
-	{ 0x30,  "INTENB0" }, { 0x36,  "BRDYENB" }, { 0x38,  "NRDYENB" },
-	{ 0x3A,  "BEMPENB" }, { 0x3C, "SOFCFG" }, { 0x40, "INTSTS0" },
-	{ 0x46, "BRDYSTS" }, { 0x48, "NRDYSTS"  }, { 0x4A, "BEMPSTS" },
-	{ 0x4C, "FRMNUM" }, { 0x4E, "UFRMNUM" }, { 0x50, "USBADDR" },
-	{ 0x54, "USBREQ" }, { 0x56, "USBVAL" }, { 0x58, "USBINDX" },
-	{ 0x5A, "USBLENG" }, { 0x5E, "DCPMAXP" }, { 0x60, "DCPCTR" },
-	{ 0x64, "PIPESEL" }, { 0x68, "PIPECFG" }, { 0x6A, "PIPEBUF" },
-	{ 0x6C, "PIPEMAXP" }, { 0x6E, "PIPEPERI" }, { 0x70, "PIPE1CTR" },
-	{ 0x72, "PIPE2CTR" }, { 0x74, "PIPE3CTR" }, { 0x76, "PIPE4CTR" },
-	{ 0x78, "PIPE5CTR" }, { 0x7A, "PIPE6CTR" }, { 0x7C, "PIPE7CTR" },
-	{ 0x7E, "PIPE8CTR" }, { 0x80, "PIPE9CTR" }, { 0x82, "PIPEACTR" },
-	{ 0x84, "PIPEBCTR" }, { 0x86, "PIPECCTR" }, { 0x88, "PIPEDCTR" },
-	{ 0x8A, "PIPEECTR" }, { 0x8C, "PIPEFCTR" }, { 0x90, "PIPE1TRE" },
-	{ 0x92, "PIPE1TRN" }, { 0x94, "PIPE2TRE" }, { 0x96, "PIPE2TRN" },
-	{ 0x98, "PIPE3TRE" }, { 0x9A, "PIPE3TRN" }, { 0x9C, "PIPE4TRE" },
-	{ 0x9E, "PIPE4TRN" }, { 0xA0, "PIPE5TRE" }, { 0xA2, "PIPE5TRN" },
-	{ 0xA4, "PIPEBTRE" }, { 0xA6, "PIPEBTRN" }, { 0xA8, "PIPECTRE" },
-	{ 0xAA, "PIPECTRN" }, { 0xAC, "PIPEDTRE" }, { 0xAE, "PIPEDTRN" },
-	{ 0xB0, "PIPEETRE" }, { 0xB2, "PIPEETRN" }, { 0xB4, "PIPEFTRE" },
-	{ 0xB6, "PIPEFTRN" }, { 0xB8, "PIPE9TRE" }, { 0xBA, "PIPE9TRN" },
-	{ 0xBC, "PIPEATRE" }, { 0xBE, "PIPEATRN" }, { 0xF0, "D2FIFOSEL" },
-	{ 0xF2, "D2FIFOCTR" }, { 0xF4, "D3FIFOSEL" }, { 0xF6, "D3FIFOCTR" },
-	{ 0x102, "LPSTS" }, { 0x140, "BCCTRL" }, { 0x184, "UGCTRL2" },
-};
-
 /*
  *		common functions
  */
 u16 usbhs_read(struct usbhs_priv *priv, u32 reg)
 {
-	return readw(priv->base + reg);
+	return ioread16(priv->base + reg);
 }
 
 void usbhs_write(struct usbhs_priv *priv, u32 reg, u16 data)
 {
-	writew(data, priv->base + reg);
+	iowrite16(data, priv->base + reg);
 }
 
 void usbhs_bset(struct usbhs_priv *priv, u32 reg, u16 mask, u16 data)
@@ -125,11 +62,6 @@ void usbhs_bset(struct usbhs_priv *priv, u32 reg, u16 mask, u16 data)
 	val |= data & mask;
 
 	usbhs_write(priv, reg, val);
-}
-
-struct usbhs_priv *usbhs_pdev_to_priv(struct platform_device *pdev)
-{
-	return dev_get_drvdata(&pdev->dev);
 }
 
 /*
@@ -144,10 +76,6 @@ void usbhs_sys_host_ctrl(struct usbhs_priv *priv, int enable)
 {
 	u16 mask = DCFM | DRPD | DPRPU | HSE | USBE;
 	u16 val  = DCFM | DRPD | HSE | USBE;
-	int has_otg = usbhs_get_dparam(priv, has_otg);
-
-	if (has_otg)
-		usbhs_bset(priv, DVSTCTR, (EXTLP | PWEN), (EXTLP | PWEN));
 
 	/*
 	 * if enable
@@ -163,13 +91,6 @@ void usbhs_sys_function_ctrl(struct usbhs_priv *priv, int enable)
 	u16 mask = DCFM | DRPD | DPRPU | HSE | USBE;
 	u16 val  = HSE | USBE;
 
-	/* CNEN bit is required for function operation */
-#if defined(CONFIG_RZ_CMN) || defined(CONFIG_R9A07G044C) || defined(CONFIG_R9A07G043U) || defined(CONFIG_R9A07G054L) || defined(CONFIG_ARCH_RZMPU)
-	if (usbhs_get_dparam(priv, has_cnen)) {
-		mask |= CNEN;
-		val  |= CNEN;
-	}
-#endif
 	/*
 	 * if enable
 	 *
@@ -210,17 +131,17 @@ void usbhs_usbreq_get_val(struct usbhs_priv *priv, struct usb_ctrlrequest *req)
 	req->bRequest		= (val >> 8) & 0xFF;
 	req->bRequestType	= (val >> 0) & 0xFF;
 
-	req->wValue	= usbhs_read(priv, USBVAL);
-	req->wIndex	= usbhs_read(priv, USBINDX);
-	req->wLength	= usbhs_read(priv, USBLENG);
+	req->wValue	= cpu_to_le16(usbhs_read(priv, USBVAL));
+	req->wIndex	= cpu_to_le16(usbhs_read(priv, USBINDX));
+	req->wLength	= cpu_to_le16(usbhs_read(priv, USBLENG));
 }
 
 void usbhs_usbreq_set_val(struct usbhs_priv *priv, struct usb_ctrlrequest *req)
 {
 	usbhs_write(priv, USBREQ,  (req->bRequest << 8) | req->bRequestType);
-	usbhs_write(priv, USBVAL,  req->wValue);
-	usbhs_write(priv, USBINDX, req->wIndex);
-	usbhs_write(priv, USBLENG, req->wLength);
+	usbhs_write(priv, USBVAL,  le16_to_cpu(req->wValue));
+	usbhs_write(priv, USBINDX, le16_to_cpu(req->wIndex));
+	usbhs_write(priv, USBLENG, le16_to_cpu(req->wLength));
 
 	usbhs_bset(priv, DCPCTR, SUREQ, SUREQ);
 }
@@ -233,7 +154,7 @@ void usbhs_bus_send_sof_enable(struct usbhs_priv *priv)
 	u16 status = usbhs_read(priv, DVSTCTR) & (USBRST | UACT);
 
 	if (status != USBRST) {
-		struct device *dev __attribute__((unused));
+		struct device *dev = usbhs_priv_to_dev(priv);
 		dev_err(dev, "usbhs should be reset\n");
 	}
 
@@ -261,18 +182,9 @@ int usbhs_bus_get_speed(struct usbhs_priv *priv)
 	return USB_SPEED_UNKNOWN;
 }
 
-int usbhs_vbus_ctrl(struct usbhs_priv *priv, int enable)
-{
-	struct platform_device *pdev = usbhs_priv_to_pdev(priv);
-
-	return usbhs_platform_call(priv, set_vbus, pdev, enable);
-}
-
 static void usbhsc_bus_init(struct usbhs_priv *priv)
 {
 	usbhs_write(priv, DVSTCTR, 0);
-
-	usbhs_vbus_ctrl(priv, 0);
 }
 
 /*
@@ -281,7 +193,7 @@ static void usbhsc_bus_init(struct usbhs_priv *priv)
 int usbhs_set_device_config(struct usbhs_priv *priv, int devnum,
 			   u16 upphub, u16 hubport, u16 speed)
 {
-	struct device *dev __attribute__((unused));
+	struct device *dev = usbhs_priv_to_dev(priv);
 	u16 usbspd = 0;
 	u32 reg = DEVADD0 + (2 * devnum);
 
@@ -363,71 +275,56 @@ static struct renesas_usbhs_driver_pipe_config usbhsc_new_pipe[] = {
 	RENESAS_USBHS_PIPE(USB_ENDPOINT_XFER_BULK, 512, 0xd8, true),
 };
 
-/*
- *		power control
- */
-static void usbhsc_power_ctrl(struct usbhs_priv *priv, int enable)
+#define LPSTS			0x102
+#define LPSTS_SUSPM		BIT(14)
+
+#define UGCTRL2			0x184
+#define UGCTRL2_RESERVED_3	BIT(0)
+#define UGCTRL2_USB0SEL_EHCI	0x10
+#define UGCTRL2_USB0SEL_HSUSB	0x20
+#define UGCTRL2_USB0SEL_OTG	0x30
+#define UGCTRL2_USB0SEL_MASK	0x30
+#define UGCTRL2_VBUSSEL		BIT(10)
+
+struct usbhs_priv_otg_data {
+	void __iomem		*base;
+	void __iomem		*phybase;
+
+	struct platform_device	usbhs_dev;
+	struct usbhs_priv	usbhs_priv;
+
+	struct phy		phy;
+};
+
+static int usbhs_rcar3_power_ctrl(struct usbhs_priv *priv, bool enable)
 {
-	struct platform_device *pdev = usbhs_priv_to_pdev(priv);
-	struct device *dev __attribute__((unused));
-
 	if (enable) {
-		/* enable PM */
-		pm_runtime_get_sync(dev);
+		writel(UGCTRL2_USB0SEL_OTG | UGCTRL2_VBUSSEL | UGCTRL2_RESERVED_3,
+		       priv->base + UGCTRL2);
 
-		/* enable platform power */
-		usbhs_platform_call(priv, power_ctrl, pdev, priv->base, enable);
+		usbhs_bset(priv, LPSTS, LPSTS_SUSPM, LPSTS_SUSPM);
+		/* The controller on R-Car Gen3 needs to wait up to 90 usec */
+		udelay(90);
 
-		/* USB on */
 		usbhs_sys_clock_ctrl(priv, enable);
 	} else {
-		/* USB off */
 		usbhs_sys_clock_ctrl(priv, enable);
 
-		/* disable platform power */
-		usbhs_platform_call(priv, power_ctrl, pdev, priv->base, enable);
-
-		/* disable PM */
-		pm_runtime_put_sync(dev);
+		usbhs_bset(priv, LPSTS, LPSTS_SUSPM, 0);
 	}
-	pr_dbg("--%s\n", __func__);
+
+	return 0;
 }
 
-/*
- *		hotplug
- */
-static void usbhsc_hotplug(struct usbhs_priv *priv)
+void usbhsc_hotplug(struct usbhs_priv *priv)
 {
-	struct platform_device *pdev = usbhs_priv_to_pdev(priv);
-	int id;
-	int enable;
 	int ret;
 
-	/*
-	 * get vbus status from platform
-	 */
-
-	pr_dbg("++%s\n", __func__);
-
-	/*
-	 * Hack: We need to enable it here to avoid entering host mode
-	 * and fifo select error
-	 * Since this is u-boot, we may sacrifice real hotbplug function.
-	 */
-	enable = 1;
-	/*
-	 * get id from platform
-	 */
-	id = usbhs_platform_call(priv, get_id, pdev);
-
-	pr_dbg("perform enable\n");
-	ret = usbhs_mod_change(priv, id);
+	ret = usbhs_mod_change(priv, USBHS_GADGET);
 	if (ret < 0)
 		return;
 
-	dev_dbg(&pdev->dev, "%s enable\n", __func__);
-
-	usbhsc_power_ctrl(priv, enable);
+	usbhs_rcar3_power_ctrl(priv, true);
 
 	/* bus init */
 	usbhsc_set_buswait(priv);
@@ -435,100 +332,37 @@ static void usbhsc_hotplug(struct usbhs_priv *priv)
 
 	/* module start */
 	usbhs_mod_call(priv, start, priv);
-
-	pr_dbg("--%s\n", __func__);
 }
 
-/*
- *		notify hotplug
- */
+#define USB2_OBINTSTA		0x604
+#define USB2_OBINT_SESSVLDCHG		BIT(12)
+#define USB2_OBINT_IDDIGCHG		BIT(11)
 
-void usbhsc_notify_hotplug(struct usbhs_priv *priv)
+static int usbhs_udc_otg_gadget_handle_interrupts(struct udevice *dev)
 {
-	pr_dbg("+-%s\n", __func__);
-	usbhsc_hotplug(priv);
-}
+	struct usbhs_priv_otg_data *priv = dev_get_priv(dev);
+	const u32 status = readl(priv->phybase + USB2_OBINTSTA);
 
-static int usbhsc_drvcllbck_notify_hotplug(struct platform_device *pdev)
-{
-	struct usbhs_priv *priv = usbhs_pdev_to_priv(pdev);
-	int delay = usbhs_get_dparam(priv, detection_delay);
+	/* We don't have a good way to forward IRQ to PHY yet */
+	if (status & (USB2_OBINT_SESSVLDCHG | USB2_OBINT_IDDIGCHG)) {
+		writel(USB2_OBINT_SESSVLDCHG | USB2_OBINT_IDDIGCHG,
+		       priv->phybase + USB2_OBINTSTA);
+		generic_phy_set_mode(&priv->phy, PHY_MODE_USB_OTG, 0);
+	}
 
-	pr_dbg("+-%s\n", __func__);
-	mdelay(delay);
-	usbhsc_notify_hotplug(priv);
+	usbhs_interrupt(0, &priv->usbhs_priv);
 
 	return 0;
 }
 
-/*
- *		platform functions
- */
-int usbhs_probe(struct platform_device *pdev)
+static int usbhs_probe(struct usbhs_priv *priv)
 {
-	struct usbhs_priv *priv;
 	int ret;
 
-	pr_dbg("++%s\n", __func__);
-
-	/* usb private data */
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
-
-	if (soc_id == RZ_SOC_RZV2H)
-		priv->base = (void *)RZV2H_USBHS_BASE;
-
-	if (soc_id == RZ_SOC_RZG2L || soc_id == RZ_SOC_RZV2L)
-		priv->base = (void *)RZG2L_USBHS_BASE;
-
-	if (IS_ERR(priv->base))
-		return PTR_ERR(priv->base);
-
-
-	/*
-	 * care platform info
-	 */
-	pr_dbg("priv->dparam.type = %ld\n", priv->dparam.type);
-#if defined(CONFIG_RZ_CMN) || defined(CONFIG_R9A07G044C) || defined(CONFIG_R9A07G043U) || defined(CONFIG_R9A07G054L) || defined(CONFIG_ARCH_RZMPU)
-	priv->dparam.type = USBHS_TYPE_G2L;
-#else /* !defined(CONFIG_R9A07G044L) */
 	priv->dparam.type = USBHS_TYPE_RCAR_GEN3;
-#endif
-
-#if defined(CONFIG_RZ_CMN) || defined(CONFIG_R9A07G044C) || defined(CONFIG_R9A07G043U) || defined(CONFIG_R9A07G054L) || defined(CONFIG_ARCH_RZMPU)
-	priv->pfunc = usbhs_g2l_ops;
-#else /* !defined(CONFIG_R9A07G044L) */
-	priv->pfunc = usbhs_rcar3_ops;
-#endif
-	if (!priv->dparam.pipe_configs) {
-		priv->dparam.pipe_configs = usbhsc_new_pipe;
-#if defined(CONFIG_RZ_CMN) || defined(CONFIG_R9A07G044C) || defined(CONFIG_R9A07G043U) || defined(CONFIG_R9A07G054L) || defined(CONFIG_ARCH_RZMPU)
-		priv->dparam.has_cnen = 1;
-		priv->dparam.cfifo_byte_addr = 1;
-#endif
-		priv->dparam.pipe_size = ARRAY_SIZE(usbhsc_new_pipe);
-	}
-
-	if (!priv->dparam.pio_dma_border)
-		priv->dparam.pio_dma_border = 64; /* 64byte */
-
-	if (priv->pfunc.get_vbus)
-		usbhsc_flags_set(priv, USBHSF_RUNTIME_PWCTRL);
-
-	/*
-	 * priv settings
-	 */
-	priv->pdev	= pdev;
-	spin_lock_init(usbhs_priv_to_lock(priv));
-
-#if defined(CONFIG_RZ_CMN) || defined(CONFIG_R9A07G044C) || defined(CONFIG_R9A07G043U) || defined(CONFIG_R9A07G054L) || defined(CONFIG_ARCH_RZMPU)
-	/* Fix fifo selection error */
-	if (priv->pfunc.power_ctrl) {
-		platform_set_drvdata(pdev, priv);
-		usbhsc_power_ctrl(priv, 1);
-	}
-#endif
+	priv->dparam.pio_dma_border = 64;
+	priv->dparam.pipe_configs = usbhsc_new_pipe;
+	priv->dparam.pipe_size = ARRAY_SIZE(usbhsc_new_pipe);
 
 	/* call pipe and module init */
 	ret = usbhs_pipe_probe(priv);
@@ -543,107 +377,102 @@ int usbhs_probe(struct platform_device *pdev)
 	if (ret < 0)
 		goto probe_end_fifo_exit;
 
-	/* dev_set_drvdata should be called after usbhs_mod_init */
-	platform_set_drvdata(pdev, priv);
-
-	/*
-	 * deviece reset here because
-	 * USB device might be used in boot loader.
-	 */
 	usbhs_sys_clock_ctrl(priv, 0);
 
-	/*
-	 * platform call
-	 *
-	 * USB phy setup might depend on CPU/Board.
-	 * If platform has its callback functions,
-	 * call it here.
-	 */
-	ret = usbhs_platform_call(priv, hardware_init, pdev);
-	if (ret < 0) {
-		dev_err(&pdev->dev, "platform init failed.\n");
-		goto probe_end_mod_exit;
-	}
-
-	/* reset phy for connection */
-	usbhs_platform_call(priv, phy_reset, pdev);
-
-	/* power control */
-	pm_runtime_enable(&pdev->dev);
-	if (!usbhsc_flags_has(priv, USBHSF_RUNTIME_PWCTRL)) {
-		usbhsc_power_ctrl(priv, 1);
-		usbhs_mod_autonomy_mode(priv);
-	}
-
-	/*
-	 * manual call notify_hotplug for cold plug
-	 */
-	usbhsc_drvcllbck_notify_hotplug(pdev);
-
-	pr_dbg("--%s\n", __func__);
+	usbhs_rcar3_power_ctrl(priv, true);
+	usbhs_mod_autonomy_mode(priv);
+	usbhsc_hotplug(priv);
 
 	return ret;
 
-probe_end_mod_exit:
-	usbhs_mod_remove(priv);
 probe_end_fifo_exit:
 	usbhs_fifo_remove(priv);
 probe_end_pipe_exit:
 	usbhs_pipe_remove(priv);
-
-	dev_info(&pdev->dev, "probe failed\n");
-
-	pr_dbg("--%s(-1)\n", __func__);
-
 	return ret;
 }
 
-int usbhs_remove(struct platform_device *pdev)
+static int usbhs_udc_otg_probe(struct udevice *dev)
 {
-	struct usbhs_priv *priv = usbhs_pdev_to_priv(pdev);
+	struct usbhs_priv_otg_data *priv = dev_get_priv(dev);
+	struct usb_gadget *gadget;
+	struct clk_bulk clk_bulk;
+	int ret = -EINVAL;
 
-	pr_dbg("++%s\n", __func__);
+	priv->base = dev_read_addr_ptr(dev);
+	if (!priv->base)
+		return -EINVAL;
 
-	/* power off */
-	if (!usbhsc_flags_has(priv, USBHSF_RUNTIME_PWCTRL))
-		usbhsc_power_ctrl(priv, 0);
+	ret = clk_get_bulk(dev, &clk_bulk);
+	if (ret)
+		return ret;
 
-	usbhs_mod_remove(priv);
-	usbhs_fifo_remove(priv);
-	usbhs_pipe_remove(priv);
+	ret = clk_enable_bulk(&clk_bulk);
+	if (ret)
+		return ret;
 
-	pr_dbg("--%s\n", __func__);
+	clrsetbits_le32(priv->base + UGCTRL2, UGCTRL2_USB0SEL_MASK, UGCTRL2_USB0SEL_EHCI);
+	clrsetbits_le16(priv->base + LPSTS, LPSTS_SUSPM, LPSTS_SUSPM);
 
-	return 0;
+	ret = generic_setup_phy(dev, &priv->phy, 0, PHY_MODE_USB_OTG, 1);
+	if (ret)
+		goto err_clk;
+
+	priv->phybase = dev_read_addr_ptr(priv->phy.dev);
+
+	priv->usbhs_priv.pdev = &priv->usbhs_dev;
+	priv->usbhs_priv.base = priv->base;
+	priv->usbhs_dev.dev.driver_data = &priv->usbhs_priv;
+	ret = usbhs_probe(&priv->usbhs_priv);
+	if (ret < 0)
+		goto err_phy;
+
+	gadget = usbhsg_get_gadget(&priv->usbhs_priv);
+	gadget->is_dualspeed = 1;
+	gadget->is_otg = 0;
+	gadget->is_a_peripheral = 0;
+	gadget->b_hnp_enable = 0;
+	gadget->a_hnp_support = 0;
+	gadget->a_alt_hnp_support = 0;
+
+	return usb_add_gadget_udc((struct device *)dev, gadget);
+
+err_phy:
+	generic_shutdown_phy(&priv->phy);
+err_clk:
+	clk_disable_bulk(&clk_bulk);
+	return ret;
 }
 
-void usbhs_dump_regs(struct usbhs_priv *priv)
+static int usbhs_udc_otg_remove(struct udevice *dev)
 {
-	int i;
-	u16 reg16;
-	u32 reg32;
+	struct usbhs_priv_otg_data *priv = dev_get_priv(dev);
 
-	if (!priv) {
-		printf("Error: usbhs_priv structure is NULL\n");
-		return;
-	}
-	printf("\r\n");
-	for (i = 0; i < ARRAY_SIZE(usbhs_regnames)-1; i++) {
-		reg16  = usbhs_read(priv, usbhs_regnames[i].regaddr);
-		printf("%s [0x%x] = 0x%x\n", usbhs_regnames[i].regname,
-							 usbhs_regnames[i].regaddr,
-							 reg16);
-	}
-	/*Last register is a special one since it's 32-bit*/
+	usbhs_rcar3_power_ctrl(&priv->usbhs_priv, false);
+	usbhs_mod_remove(&priv->usbhs_priv);
+	usbhs_fifo_remove(&priv->usbhs_priv);
+	usbhs_pipe_remove(&priv->usbhs_priv);
 
-	reg32 = readl(priv->base + usbhs_regnames[i].regaddr);
+	generic_shutdown_phy(&priv->phy);
 
-	printf("%s [0x%x] = 0x%x\n", usbhs_regnames[i].regname,
-						 usbhs_regnames[i].regaddr,
-						 reg32);
+	return dm_scan_fdt_dev(dev);
 }
 
+static const struct udevice_id usbhs_udc_otg_ids[] = {
+	{ .compatible = "renesas,rcar-gen3-usbhs" },
+	{},
+};
 
-MODULE_LICENSE("GPL");
-MODULE_DESCRIPTION("Renesas USB driver");
-MODULE_AUTHOR("Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>");
+static const struct usb_gadget_generic_ops usbhs_udc_otg_ops = {
+	.handle_interrupts = usbhs_udc_otg_gadget_handle_interrupts,
+};
+
+U_BOOT_DRIVER(usbhs_udc_otg) = {
+	.name		= "usbhs-udc-otg",
+	.id		= UCLASS_USB_GADGET_GENERIC,
+	.ops		= &usbhs_udc_otg_ops,
+	.of_match	= usbhs_udc_otg_ids,
+	.probe		= usbhs_udc_otg_probe,
+	.remove		= usbhs_udc_otg_remove,
+	.priv_auto	= sizeof(struct usbhs_priv_otg_data),
+};

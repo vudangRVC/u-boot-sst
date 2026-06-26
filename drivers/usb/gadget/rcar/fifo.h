@@ -1,36 +1,30 @@
+/* SPDX-License-Identifier: GPL-1.0+ */
 /*
  * Renesas USB driver
  *
  * Copyright (C) 2011 Renesas Solutions Corp.
  * Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
- *
- * Ported to u-boot
- * Copyright (C) 2016 GlobalLogic
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
- *
  */
 #ifndef RENESAS_USB_FIFO_H
 #define RENESAS_USB_FIFO_H
 
-#include <linux/list.h>
+#include <dma.h>
 #include "pipe.h"
+
+/*
+ * Drivers, using this library are expected to embed struct shdma_dev,
+ * struct shdma_chan, struct shdma_desc, and struct shdma_slave
+ * in their respective device, channel, descriptor and slave objects.
+ */
 
 struct shdma_slave {
 	int slave_id;
 };
 
+/* Used by slave DMA clients to request DMA to/from a specific peripheral */
 struct sh_dmae_slave {
 	struct shdma_slave		shdma_slave;	/* Set by the platform */
 };
-
 
 struct usbhs_fifo {
 	char *name;
@@ -38,14 +32,13 @@ struct usbhs_fifo {
 	u32 sel;	/* xFIFOSEL */
 	u32 ctr;	/* xFIFOCTR */
 
-	void *tx_chan;
-	void *rx_chan;
+	struct usbhs_pipe	*pipe;
+
+	struct dma_chan		*tx_chan;
+	struct dma_chan		*rx_chan;
 
 	struct sh_dmae_slave	tx_slave;
 	struct sh_dmae_slave	rx_slave;
-
-	struct usbhs_pipe	*pipe;
-
 };
 
 #define USBHS_MAX_NUM_DFIFO	4
@@ -68,6 +61,8 @@ struct usbhs_pkt {
 	void (*done)(struct usbhs_priv *priv,
 		     struct usbhs_pkt *pkt);
 	struct work_struct work;
+	dma_addr_t dma;
+	const struct dmaengine_result *dma_result;
 	void *buf;
 	int length;
 	int trans;
@@ -114,5 +109,6 @@ void usbhs_pkt_push(struct usbhs_pipe *pipe, struct usbhs_pkt *pkt,
 		    void *buf, int len, int zero, int sequence);
 struct usbhs_pkt *usbhs_pkt_pop(struct usbhs_pipe *pipe, struct usbhs_pkt *pkt);
 void usbhs_pkt_start(struct usbhs_pipe *pipe);
+struct usbhs_pkt *__usbhsf_pkt_get(struct usbhs_pipe *pipe);
 
 #endif /* RENESAS_USB_FIFO_H */
