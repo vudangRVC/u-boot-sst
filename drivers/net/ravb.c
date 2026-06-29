@@ -24,6 +24,7 @@
 #include <asm/global_data.h>
 #include <asm/gpio.h>
 #include <reset.h>
+#include <configs/rz-cmn.h>
 
 extern u64 soc_id;
 

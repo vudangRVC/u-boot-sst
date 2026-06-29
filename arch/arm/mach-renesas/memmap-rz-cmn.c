@@ -10,6 +10,7 @@
 #include <asm/global_data.h>
 #include <asm/system.h>
 #include <cpu_func.h>
+#include <configs/rz-cmn.h>
 
 extern u64 soc_id;
 

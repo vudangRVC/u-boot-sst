@@ -675,8 +675,6 @@ static void s_init_rzg2l_sbc(void)
 
 void s_init(void)
 {
-	// printf("=== U-Boot: s_init, board_id=0x%lx, soc_id=0x%lx ===\n",
-	//        (unsigned long)board_id, (unsigned long)soc_id);
 	if (board_id == BOARD_ID_RZV2H_EVK || board_id == BOARD_ID_RZV2H_RDK || board_id == BOARD_ID_IMDT_V2H_SBC) {
 		s_init_rzv2h();
 	} else if (board_id == BOARD_ID_RZG2L_SBC) {
@@ -688,7 +686,6 @@ void s_init(void)
 	} else {
 		return;
 	}
-	// printf("=== U-Boot: s_init done ===\n");
 }
 
 static void rzv2h_usbphy_init(void)

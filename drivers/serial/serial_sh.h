@@ -3,10 +3,6 @@
  */
 
 #include <dm/platform_data/serial_sh.h>
-enum sci_regtype {
-	SCIx_REGTYPE_RCAR,	/* R-Car Gen2/3/4 SCIF/HSCIF layout */
-	SCIx_REGTYPE_RZG2L,	/* RZ/G2L SCIF layout */
-};
 
 struct uart_port {
 	unsigned long	iobase;		/* in/out[bwl] */
@@ -14,7 +10,6 @@ struct uart_port {
 	unsigned long	mapbase;	/* for ioremap */
 	enum sh_serial_type type;	/* port type */
 	enum sh_clk_mode clk_mode;	/* clock mode */
-	enum sci_regtype regtype;	/* SCIF register layout */
 };
 
 #if defined(CONFIG_CPU_SH7721) || \
@@ -318,8 +313,7 @@ static inline void sci_##name##_out(struct uart_port *port,\
 					sh4_scif_offset, sh4_scif_size)
 		#define SCIF_FNS(name, sh4_scif_offset, sh4_scif_size) \
 			CPU_SCIF_FNS(name, sh4_scif_offset, sh4_scif_size)
-#elif defined(CONFIG_RZG2L) || defined(CONFIG_R9A07G044L) || defined(CONFIG_R9A07G044C) || \
-		defined(CONFIG_R9A07G054L) || defined(CONFIG_R9A07Gx) || defined(CONFIG_R9A07G043U) || defined(CONFIG_RZF_DEV)
+#elif defined(CONFIG_RZG2L)
 #define SCIF_FNS(reg_name, reg_offset, reg_size) \
 	CPU_SCIF_FNS(reg_name, reg_offset, reg_size)
 #else
@@ -397,8 +391,7 @@ SCIF_FNS(SCLSR,  0,  0, 0x14, 16)
 #else
 SCIF_FNS(SCLSR,  0,  0, 0x24, 16)
 #endif
-#elif defined(CONFIG_RZG2L) || defined(CONFIG_R9A07G044L) || defined(CONFIG_R9A07G044C) || \
-		defined(CONFIG_R9A07G054L) || defined(CONFIG_R9A07Gx) || defined(CONFIG_R9A07G043U) || defined(CONFIG_RZF_DEV)
+#elif defined(CONFIG_RZG2L)
 SCIF_FNS(SCSMR,  0x00, 16)
 SCIF_FNS(SCBRR,  0x02,  8)
 SCIF_FNS(SCSCR,  0x04, 16)
@@ -495,10 +488,20 @@ static const struct sci_reg_desc sci_regmap_rzg2l[SCIx_NR_REGS] = {
 	[SCIx_SCLSR]  = { 0x12, 16 },
 };
 
+/* soc_id is set by lowlevel_init from ATF boot args */
+extern u64 soc_id;
+#define _RZ_SOC_RCAR_V4H	0x04ULL
+
 static inline const struct sci_reg_desc *sci_regmap(struct uart_port *port)
 {
-	return port->regtype == SCIx_REGTYPE_RZG2L ?
-		sci_regmap_rzg2l : sci_regmap_rcar;
+	/*
+	 * V4H uses HSCIF → RCAR layout.
+	 * Non-V4H boards probe SCIF as PORT_SCIFA → RZG2L compact layout.
+	 * All other port types (SCIF, HSCIF) on non-V4H also use RCAR layout.
+	 */
+	if (soc_id != _RZ_SOC_RCAR_V4H && port->type == PORT_SCIFA)
+		return sci_regmap_rzg2l;
+	return sci_regmap_rcar;
 }
 
 static inline unsigned int sci_serial_in(struct uart_port *port,

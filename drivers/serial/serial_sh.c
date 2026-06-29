@@ -22,7 +22,6 @@
 #include <string.h>
 
 DECLARE_GLOBAL_DATA_PTR;
-extern u64 soc_id;
 
 #if defined(CONFIG_CPU_SH7780)
 static int scif_rxfill(struct uart_port *port)
@@ -218,11 +217,6 @@ static int sh_serial_probe(struct udevice *dev)
 	priv->mapbase	= plat->base;
 	priv->type	= plat->type;
 	priv->clk_mode	= plat->clk_mode;
-
-	if (soc_id != RZ_SOC_RCAR_V4H) {
-		priv->regtype = (priv->type == PORT_SCIFA) ?
-				SCIx_REGTYPE_RZG2L : SCIx_REGTYPE_RCAR;
-	}
 
 	/* De-assert the module reset if it is defined. */
 	ret = reset_get_by_index(dev, 0, &rst);

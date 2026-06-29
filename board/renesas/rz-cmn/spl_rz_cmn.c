@@ -434,14 +434,21 @@ void reset_cpu(void)
 {
 }
 
-void __weak jump_to_image_no_args(struct spl_image_info *spl_image)
+void __noreturn jump_to_image(struct spl_image_info *spl_image)
 {
-	if (soc_id != RZ_SOC_RCAR_V4H)
-		return;
-	typedef void __noreturn (*image_entry_noargs_t)(void);
-	image_entry_noargs_t image_entry =
-		(image_entry_noargs_t)spl_image->entry_point;
-	image_entry();
+	/*
+	 * Pass board_id in x2 and soc_id in x3, matching the ATF convention
+	 * that save_boot_params / lowlevel_init expects.
+	 * Without this, x2/x3 contain garbage from SPL's C registers and
+	 * U-Boot proper reads wrong board_id/soc_id.
+	 */
+	typedef void __noreturn (*image_entry_t)(u64, u64, u64, u64);
+	image_entry_t image_entry = (image_entry_t)spl_image->entry_point;
+
+	debug("image entry point: 0x%lx board_id=0x%llx soc_id=0x%llx\n",
+	      spl_image->entry_point, (u64)board_id, (u64)soc_id);
+
+	image_entry(0, 0, (u64)board_id, (u64)soc_id);
 }
 
 #endif /* CONFIG_XPL_BUILD */

@@ -98,12 +98,30 @@ set_gicd_v4h:
 	ldr		x0, =GICD_BASE_RCAR_V4H
 
 continue_gic_init:
+	/*
+	 * V4H: ATF + SPL already initialized GIC. Skip gic_init_secure to
+	 * avoid re-initializing after SPL.  For other SoCs running at EL3
+	 * without a prior secure init, proceed normally.
+	 */
+	mrs	x12, CurrentEL
+
+	/* Skip GIC if soc_id == V4H (0x04) — already done by ATF+SPL */
+	mov	w13, #0x04		/* RZ_SOC_RCAR_V4H */
+	cmp	w11, w13
+	b.eq	skip_gic_secure
+	/* Also skip if not in EL3 */
+	cmp	x12, #0xC
+	b.ne	skip_gic_secure
 
 #ifndef CONFIG_ARMV8_MULTIENTRY
 	bl		gic_init_secure
 #else
-	branch_if_slave x0, 1f
+	branch_if_slave x0, skip_gic_secure
 	bl	gic_init_secure
+#endif
+
+skip_gic_secure:
+#ifdef CONFIG_ARMV8_MULTIENTRY
 1:
 	/* Set GICR_BASE based on SoC ID for secure_percpu init */
 	mov		w10, #0x01		/* RZ_SOC_RZG2L */
@@ -138,8 +156,16 @@ set_gicr_v4h:
 	ldr		x0, =GICR_BASE_RCAR_V4H
 
 do_gicr:
+	/* Skip percpu init for V4H or non-EL3 */
+	mov	w13, #0x04
+	cmp	w11, w13
+	b.eq	2f
+	mrs	x12, CurrentEL
+	cmp	x12, #0xC
+	b.ne	2f
 	bl		gic_init_secure_percpu
 
+2:
 	branch_if_master x0, 2f
 
 	/*
