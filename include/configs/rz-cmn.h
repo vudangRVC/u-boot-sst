@@ -72,10 +72,32 @@
 /* The HF/QSPI layout permits up to 1 MiB large bootloader blob */
 #define CONFIG_BOARD_SIZE_LIMIT		1048576
 
+/*
+ * RZ_FDT_HIGH - FDT high address boundary
+ *
+ * On RZ/G2L boards, DRAM starts at 0x48000000. For the boards currently
+ * using this setting, the first Linux reserved-memory/CMA region begins
+ * at 0x58000000, so fdt_high is capped to one byte below that boundary
+ * to force U-Boot to relocate the FDT into safe RAM:
+ *
+ *   0x48000000  DRAM start
+ *   0x48000000  dtb_addr   - DTB load address
+ *   0x48010000  dtbo_addr  - DT overlay load address
+ *   0x48080000  image_addr - Kernel Image
+ *   ...         free RAM
+ *   0x57ffffff  RZ_FDT_HIGH
+ *   0x58000000  first Linux reserved-memory / CMA region
+ *
+ * This avoids placing the relocated FDT inside Linux reserved-memory.
+ *
+ */
+#define RZ_FDT_HIGH    "0x57ffffff"
+
 /* ENV setting */
 #define CFG_EXTRA_ENV_SETTINGS \
 	"bootenvfile=uEnv.txt\0" \
 	"image_flavor=normal\0" \
+	"fdt_high=" RZ_FDT_HIGH "\0" \
 	"importbootenv=echo Importing environment from mmc${mmcdev} ...; " \
 		"env import -t ${env_addr} ${filesize}\0" \
 	"loadbootenv=fatload mmc ${mmcdev}:${mmcpart} ${env_addr} ${bootenvfile}\0" \
