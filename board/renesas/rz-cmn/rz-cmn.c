@@ -66,6 +66,10 @@ DECLARE_GLOBAL_DATA_PTR;
 #define RZV2H_PWPR_REGWE_A		BIT(6)
 #define RZV2H_PWPR_REGWE_B		BIT(5)
 
+/* SDHI base */
+#define CONFIG_SYS_SH_SDHI0_BASE  0x11C00000
+#define CONFIG_SYS_SH_SDHI1_BASE  0x11C10000
+
 /* CPG */
 #define RZV2H_CPG_BASE				0x10420000
 #define RZV2H_CPG_SSEL0				(RZV2H_CPG_BASE + 0x0300)
@@ -175,6 +179,21 @@ DECLARE_GLOBAL_DATA_PTR;
 #define ESD_BOARD_INFO_PART				0
 #define RZG2L_MMC_BOARD_INFO_OFFSET		0xFA
 #define RZV2H_MMC_BOARD_INFO_OFFSET		0x2FA
+
+/* CM33 */
+#define RZV2H_CPG_CM33_CTL				(RZV2H_CPG_BASE + 0xC0C)	/* CPG_CM33_CTL  - fetch control  */
+#define RZV2H_CPG_CM33_RST				(RZV2H_CPG_BASE + 0x904)	/* CPG_RST_1     - reset control  */
+#define RZV2H_SYS_CM33_BOOTADDR_S		(RZV2H_SYS_BASE + 0x80C)	/* SYS_MCPU_CFG2 - secure vector  */
+#define RZV2H_SYS_CM33_BOOTADDR_NS		(RZV2H_SYS_BASE + 0x810)	/* SYS_MCPU_CFG3 - non-secure vector */
+#define RZV2H_CPG_RSTMON_0				(RZV2H_CPG_BASE + 0x0A00)
+
+#define RZV2H_CM33_VECTOR_S				0x08003000
+#define RZV2H_CM33_VECTOR_NS			0x18003000
+
+#define CM33_RSTMON_ALL_HELD			(0x7u << 17)
+#define CM33_RSTMON_MASK				(0x7u << 17)
+#define CM33_RSTMON_SYS_ASSERTED		(0x6u << 17)
+#define CM33_RSTMON_ALL_RELEASED		(0x0u << 17)
 
 extern u64 rcar_atf_boot_args[];
 extern u64 board_id;
@@ -832,14 +851,49 @@ pmic_failed:
 	return;
 }
 
+static int rzv2h_cm33_prep(void)
+{
+	u32 readback_s, readback_ns;
+
+	/* Disable CM33 fetch - keep it held */
+	writel(0x00000001, (void *)RZV2H_CPG_CM33_CTL);
+
+	/* Set boot vectors BEFORE releasing reset */
+	writel(RZV2H_CM33_VECTOR_S,  (void *)RZV2H_SYS_CM33_BOOTADDR_S);
+	writel(RZV2H_CM33_VECTOR_NS, (void *)RZV2H_SYS_CM33_BOOTADDR_NS);
+
+	/* Verify vectors were written correctly */
+	readback_s  = readl((void *)RZV2H_SYS_CM33_BOOTADDR_S);
+	readback_ns = readl((void *)RZV2H_SYS_CM33_BOOTADDR_NS);
+
+	if (readback_s != RZV2H_CM33_VECTOR_S || readback_ns != RZV2H_CM33_VECTOR_NS) {
+		printf("CM33 boot vector write failed: S=0x%08x NS=0x%08x\n",
+		       readback_s, readback_ns);
+		return -EIO;
+	}
+
+	/* Confirm all resets held */
+	while ((readl((void *)RZV2H_CPG_RSTMON_0) & CM33_RSTMON_MASK) != CM33_RSTMON_ALL_HELD)
+		;
+
+	/* Assert SYS reset */
+	writel(0x00380008, (void *)RZV2H_CPG_CM33_RST);
+	while ((readl((void *)RZV2H_CPG_RSTMON_0) & CM33_RSTMON_MASK) != CM33_RSTMON_SYS_ASSERTED)
+		;
+
+	/* Release all resets */
+	writel(0x00380038, (void *)RZV2H_CPG_CM33_RST);
+	while ((readl((void *)RZV2H_CPG_RSTMON_0) & CM33_RSTMON_MASK) != CM33_RSTMON_ALL_RELEASED)
+		;
+
+	return 0;
+}
+
 int board_early_init_f(void)
 {
 	s_init();
 	return 0;
 }
-
-#define CONFIG_SYS_SH_SDHI0_BASE  0x11C00000
-#define CONFIG_SYS_SH_SDHI1_BASE  0x11C10000
 
 int board_mmc_init(struct bd_info *bis)
 {
@@ -998,6 +1052,11 @@ int board_late_init(void)
 		int ret = rzv2h_board_pmic_i2c_init();
 		if (ret)
 			printf("Failed to initialize PMIC via I2C: %d\n", ret);
+
+		/* CM33 prepare clocks */
+		ret = rzv2h_cm33_prep();
+		if (ret)
+			printf("Failed to prepare CM33: %d\n", ret);
 	}
 #ifdef CONFIG_RENESAS_RZG2LWDT
 	rzg2l_reinitr_wdt();
