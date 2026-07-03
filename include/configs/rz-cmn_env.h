@@ -58,7 +58,8 @@
 	RZ_FDT_CASE("rzv2h-evk", "1", "0", "rzv2h-evk-ver1.dtb") \
 	RZ_FDT_CASE("rzv2h-evk", "2", "0", "rzv2h-evk-ver1.dtb") \
 	RZ_FDT_CASE("rzv2h-rdk", "1", "0", "rzv2h-rdk-ver1.dtb") \
-	RZ_FDT_CASE("imdt-v2h-sbc", "1", "0", "imdt-v2h-sbc.dtb")
+	RZ_FDT_CASE("imdt-v2h-sbc", "1", "0", "imdt-v2h-sbc.dtb") \
+	RZ_FDT_CASE("sparrowhawk", "1", "0", "r8a779g3-sparrow-hawk.dtb")
 #endif
 
 /* Built-in overlay flags — add more overlays here */

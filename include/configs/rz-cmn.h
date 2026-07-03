@@ -36,6 +36,9 @@
 #define BOARD_ID_IMDT_V2H_SBC			0x32
 #define BOARD_ID_RCAR_V4H_SPARROWHAWK	0x40
 
+/* Platform settings stored in SPI flash at offset 0x400000 */
+#define CFG_SPL_PLATFORM_SETTINGS_OFFSET	0x400000
+
 /*
  * RZ Board SoC Identifiers
  * These macros define unique IDs for supported SoC variants.
@@ -114,6 +117,17 @@
 /* ENV setting */
 #ifndef CFG_EXTRA_ENV_SETTINGS
 #define CFG_EXTRA_ENV_SETTINGS \
+	"bootm_size=0x10000000\0" \
+	"mmcdev=0\0" \
+	"mmcpart=1\0" \
+	"dtb_addr=0x48000000\0" \
+	"image_addr=0x48080000\0" \
+	"env_addr=0x58000000\0" \
+	"dtbo_addr=0x58100000\0" \
+	"model_string=sparrowhawk\0" \
+	"revision_major=1\0" \
+	"revision_minor=0\0" \
+	"mmc_args=setenv bootargs rw rootwait earlycon root=/dev/mmcblk1p2\0" \
 	"bootenvfile=uEnv.txt\0" \
 	"image_flavor=normal\0" \
 	"importbootenv=echo Importing environment from mmc${mmcdev} ...; " \

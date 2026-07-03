@@ -10,6 +10,7 @@ config SYS_VENDOR
 	default "renesas"
 
 config SYS_CONFIG_NAME
+	default "rz-cmn" if RZ_CMN
 	default "sparrowhawk"
 
 endif
