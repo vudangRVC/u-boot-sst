@@ -313,7 +313,8 @@ static inline void sci_##name##_out(struct uart_port *port,\
 					sh4_scif_offset, sh4_scif_size)
 		#define SCIF_FNS(name, sh4_scif_offset, sh4_scif_size) \
 			CPU_SCIF_FNS(name, sh4_scif_offset, sh4_scif_size)
-#elif defined(CONFIG_RZG2L)
+#elif defined(CONFIG_RZG2L) || defined(CONFIG_R9A07G044L) || defined(CONFIG_R9A07G044C) || \
+		defined(CONFIG_R9A07G054L) || defined(CONFIG_R9A07Gx) || defined(CONFIG_R9A07G043U) || defined(CONFIG_RZF_DEV)
 #define SCIF_FNS(reg_name, reg_offset, reg_size) \
 	CPU_SCIF_FNS(reg_name, reg_offset, reg_size)
 #else
@@ -391,7 +392,8 @@ SCIF_FNS(SCLSR,  0,  0, 0x14, 16)
 #else
 SCIF_FNS(SCLSR,  0,  0, 0x24, 16)
 #endif
-#elif defined(CONFIG_RZG2L)
+#elif defined(CONFIG_RZG2L) || defined(CONFIG_R9A07G044L) || defined(CONFIG_R9A07G044C) || \
+		defined(CONFIG_R9A07G054L) || defined(CONFIG_R9A07Gx) || defined(CONFIG_R9A07G043U) || defined(CONFIG_RZF_DEV)
 SCIF_FNS(SCSMR,  0x00, 16)
 SCIF_FNS(SCBRR,  0x02,  8)
 SCIF_FNS(SCSCR,  0x04, 16)
