@@ -27,6 +27,8 @@ _start:
  * use it here.
  */
 #include <asm/arch/boot0.h>
+	do_boot0_hook
+	b	reset
 #else
 	b	reset
 #endif

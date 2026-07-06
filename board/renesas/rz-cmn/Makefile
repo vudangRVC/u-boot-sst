@@ -6,4 +6,9 @@
 # SPDX-License-Identifier: GPL-2.0+
 #
 
+ifdef CONFIG_SPL_BUILD
+obj-y	:= spl_rz_cmn.o
+else
 obj-y	:= rz-cmn.o
+endif
+

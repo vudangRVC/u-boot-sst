@@ -4,12 +4,13 @@ config SYS_SOC
 	default "renesas"
 
 config SYS_BOARD
-	default "sparrowhawk"
+	default "rz-cmn"
 
 config SYS_VENDOR
 	default "renesas"
 
 config SYS_CONFIG_NAME
+	default "rz-cmn" if RZ_CMN
 	default "sparrowhawk"
 
 endif

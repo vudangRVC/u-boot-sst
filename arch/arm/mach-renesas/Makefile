@@ -9,13 +9,19 @@ obj-y += emac.o
 obj-$(CONFIG_DISPLAY_BOARDINFO) += board.o
 obj-$(CONFIG_TMU_TIMER) += ../../sh/lib/time.o
 obj-$(CONFIG_RCAR_GEN2) += lowlevel_init_ca15.o cpu_info-rcar.o
-obj-$(CONFIG_RCAR_64) += lowlevel_init_gen3.o
-obj-$(CONFIG_RCAR_GEN3) += cpu_info-rcar.o memmap-gen3.o
-obj-$(CONFIG_RCAR_GEN4) += cpu_info-rcar.o memmap-gen3.o
-obj-$(CONFIG_RCAR_GEN5) += cpu_info-rcar.o memmap-gen3.o
+obj-$(CONFIG_RCAR_64) += lowlevel_init_rcar_64.o
+obj-$(CONFIG_RCAR_GEN3) += cpu_info-rcar.o memmap-gen3.o lowlevel_init_gen3.o
+ifeq ($(CONFIG_RZ_CMN),)
+obj-$(CONFIG_RCAR_GEN4) += cpu_info-rcar.o memmap-gen3.o lowlevel_init_rz_cmn.o
+obj-$(CONFIG_TARGET_SPARROWHAWK) += cpu_info-rcar.o memmap-gen3.o lowlevel_init_rz_cmn.o
+else
+obj-$(CONFIG_RCAR_GEN4) += cpu_info-rcar.o lowlevel_init_rz_cmn.o
+obj-$(CONFIG_TARGET_SPARROWHAWK) += cpu_info-rcar.o lowlevel_init_rz_cmn.o
+endif
+obj-$(CONFIG_RCAR_GEN5) += cpu_info-rcar.o memmap-gen3.o lowlevel_init_gen3.o
 obj-$(CONFIG_RZ_G2) += cpu_info-rzg.o
 obj-$(CONFIG_RZG2L) += cpu_info-rzg2l.o memmap-rzg2l.o
-obj-$(CONFIG_RZ_CMN) += memmap-rz-cmn.o
+obj-$(CONFIG_RZ_CMN) += lowlevel_init_rz_cmn.o memmap-rz-cmn.o
 
 ifneq ($(CONFIG_RCAR_64),)
 obj-$(CONFIG_ARMV8_PSCI) += psci-rcar64.o
@@ -36,7 +42,7 @@ else
 	srec_cat_le_cmd := "-l-e-constant"
 endif
 
-ifneq ($(CONFIG_RCAR_GEN4),)
+ifneq ($(CONFIG_RCAR_GEN4)$(CONFIG_TARGET_SPARROWHAWK),)
 quiet_cmd_srec_cat = SRECCAT $@
       cmd_srec_cat = srec_cat -output $@ -M 8 $< -M 8 \
 			-Output_Block_Size 16 \

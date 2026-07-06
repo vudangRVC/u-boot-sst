@@ -27,7 +27,9 @@
 #define DDR_RESERVED_SIZE 0x10000000  // 256MB reserved (128MB secure + 128MB ECC)
 #define DDR_AVAILABLE_SIZE (DDR_TOTAL_SIZE - DDR_RESERVED_SIZE)
 
+#ifndef CONFIG_REMAKE_ELF
 #define CONFIG_REMAKE_ELF
+#endif
 
 #ifdef CONFIG_SPL
 #define CONFIG_SPL_TARGET	"spl/u-boot-spl.scif"
@@ -42,8 +44,12 @@
 /* Generic Interrupt Controller Definitions */
 /* RZ/G2L use GIC-v3 */
 // #define CONFIG_GICV3
+#ifndef GICD_BASE
 #define GICD_BASE	0x11900000
+#endif
+#ifndef GICR_BASE
 #define GICR_BASE	0x11960000
+#endif
 
 /* console */
 // #define CONFIG_SYS_CBSIZE		2048
@@ -73,8 +79,6 @@
 // #define CONFIG_SYS_MALLOC_LEN		(64 * 1024 * 1024)
 // #define CONFIG_SYS_BOOTM_LEN		(64 << 20)
 
-/* The HF/QSPI layout permits up to 1 MiB large bootloader blob */
-#define CONFIG_BOARD_SIZE_LIMIT		1048576
 
 /* ENV setting */
 /* Support uEnv.txt to pass environment variables (and device tree overlays) to the kernel */
@@ -96,7 +100,9 @@
 	"ethrotate=no\0" \
 	"ethact=ethernet@11c30000\0" /* The short connector. */
 
+#ifndef CONFIG_BOOTCOMMAND
 #define CONFIG_BOOTCOMMAND	"run bootcmd_load;run bootimage"
+#endif
 
 #else
 
@@ -122,7 +128,9 @@
 		"fi;\0" \
 	"bootimage=booti ${image_addr} - ${dtb_addr} \0"
 
+#ifndef CONFIG_BOOTCOMMAND
 #define CONFIG_BOOTCOMMAND	"run envboot;run prodsdboot"
+#endif
 
 #endif
 

@@ -17,7 +17,8 @@
 
 #include "common.h"
 #include <asm/io.h>
-
+#include "renesas_usb.h"
+#include <configs/rz-cmn.h>
 
 /******* USB2.0 Host registers (original offset is +0x200) *******/
 #define USB2_INT_ENABLE		0x000

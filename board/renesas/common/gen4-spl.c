@@ -18,6 +18,9 @@
 #include <mapmem.h>
 #include <spl.h>
 
+extern u64 board_id;
+extern u64 soc_id;
+
 #define CNTCR_EN	BIT(0)
 
 #ifdef CONFIG_SPL_BUILD
@@ -42,6 +45,15 @@ static void init_generic_timer(void)
 	setbits_le32(CNTCR_BASE, CNTCR_EN);
 }
 
+__weak void spl_board_id_setup(void)
+{
+}
+
+__weak bool spl_board_needs_dbsc5_init(void)
+{
+	return true;
+}
+
 void board_init_f(ulong dummy)
 {
 	struct udevice *dev;
@@ -57,13 +69,17 @@ void board_init_f(ulong dummy)
 
 	preloader_console_init();
 
-	ret = uclass_get_device_by_name(UCLASS_NOP, "ram@e6780000", &dev);
-	if (ret)
-		printf("DBSC5 init failed: %d\n", ret);
+	spl_board_id_setup();
 
-	ret = uclass_get_device_by_name(UCLASS_RAM, "ram@ffec0000", &dev);
-	if (ret)
-		printf("RTVRAM init failed: %d\n", ret);
+	if (spl_board_needs_dbsc5_init()) {
+		ret = uclass_get_device_by_name(UCLASS_NOP, "ram@e6780000", &dev);
+		if (ret)
+			printf("DBSC5 init failed: %d\n", ret);
+
+		ret = uclass_get_device_by_name(UCLASS_RAM, "ram@ffec0000", &dev);
+		if (ret)
+			printf("RTVRAM init failed: %d\n", ret);
+	}
 };
 
 u32 spl_boot_device(void)

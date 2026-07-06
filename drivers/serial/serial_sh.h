@@ -3,6 +3,7 @@
  */
 
 #include <dm/platform_data/serial_sh.h>
+#include <configs/rz-cmn.h>
 
 struct uart_port {
 	unsigned long	iobase;		/* in/out[bwl] */
@@ -447,6 +448,89 @@ SCIF_FNS(HSSRR,				0,  0, 0x40, 16) /* HSCIF only */
 #endif
 #define sci_in(port, reg) sci_##reg##_in(port)
 #define sci_out(port, reg, value) sci_##reg##_out(port, value)
+
+enum sci_reg_idx {
+	SCIx_SCSMR, SCIx_SCBRR, SCIx_SCSCR, SCIx_SCxTDR, SCIx_SCxSR,
+	SCIx_SCxRDR, SCIx_SCFCR, SCIx_SCFDR, SCIx_SCSPTR, SCIx_SCLSR,
+	SCIx_DL, SCIx_CKS, SCIx_HSSRR, SCIx_NR_REGS
+};
+
+struct sci_reg_desc {
+	u8 offset;
+	u8 size;
+};
+
+/* R-Car Gen2/3/4 SCIF/HSCIF register layout */
+static const struct sci_reg_desc sci_regmap_rcar[SCIx_NR_REGS] = {
+	[SCIx_SCSMR]  = { 0x00, 16 },
+	[SCIx_SCBRR]  = { 0x04,  8 },
+	[SCIx_SCSCR]  = { 0x08, 16 },
+	[SCIx_SCxTDR] = { 0x0c,  8 },
+	[SCIx_SCxSR]  = { 0x10, 16 },
+	[SCIx_SCxRDR] = { 0x14,  8 },
+	[SCIx_SCFCR]  = { 0x18, 16 },
+	[SCIx_SCFDR]  = { 0x1c, 16 },
+	[SCIx_SCSPTR] = { 0x20, 16 },
+	[SCIx_SCLSR]  = { 0x24, 16 },
+	[SCIx_DL]     = { 0x30, 16 },
+	[SCIx_CKS]    = { 0x34, 16 },
+	[SCIx_HSSRR]  = { 0x40, 16 },
+};
+
+/* RZ/G2L SCIF register layout (no DL/CKS/HSSRR) */
+static const struct sci_reg_desc sci_regmap_rzg2l[SCIx_NR_REGS] = {
+	[SCIx_SCSMR]  = { 0x00, 16 },
+	[SCIx_SCBRR]  = { 0x02,  8 },
+	[SCIx_SCSCR]  = { 0x04, 16 },
+	[SCIx_SCxTDR] = { 0x06,  8 },
+	[SCIx_SCxSR]  = { 0x08, 16 },
+	[SCIx_SCxRDR] = { 0x0a,  8 },
+	[SCIx_SCFCR]  = { 0x0c, 16 },
+	[SCIx_SCFDR]  = { 0x0e, 16 },
+	[SCIx_SCSPTR] = { 0x10, 16 },
+	[SCIx_SCLSR]  = { 0x12, 16 },
+};
+
+/* soc_id is set by lowlevel_init from ATF boot args */
+extern u64 soc_id;
+
+static inline const struct sci_reg_desc *sci_regmap(struct uart_port *port)
+{
+	/*
+	 * V4H uses HSCIF → RCAR layout.
+	 * Non-V4H boards probe SCIF as PORT_SCIFA → RZG2L compact layout.
+	 * All other port types (SCIF, HSCIF) on non-V4H also use RCAR layout.
+	 */
+	if (soc_id != RZ_SOC_RCAR_V4H && port->type == PORT_SCIFA)
+		return sci_regmap_rzg2l;
+	return sci_regmap_rcar;
+}
+
+static inline unsigned int sci_serial_in(struct uart_port *port,
+					 enum sci_reg_idx idx)
+{
+	const struct sci_reg_desc *r = &sci_regmap(port)[idx];
+
+	if (r->size == 8)
+		return readb(port->membase + r->offset);
+	return readw(port->membase + r->offset);
+}
+
+static inline void sci_serial_out(struct uart_port *port, enum sci_reg_idx idx,
+				  unsigned int value)
+{
+	const struct sci_reg_desc *r = &sci_regmap(port)[idx];
+
+	if (r->size == 8)
+		writeb(value, port->membase + r->offset);
+	else if (r->size == 16)
+		writew(value, port->membase + r->offset);
+}
+
+#undef sci_in
+#undef sci_out
+#define sci_in(port, reg)		sci_serial_in(port, SCIx_##reg)
+#define sci_out(port, reg, value)	sci_serial_out(port, SCIx_##reg, value)
 
 #if defined(CONFIG_CPU_SH7750)  || \
 	defined(CONFIG_CPU_SH7751)  || \

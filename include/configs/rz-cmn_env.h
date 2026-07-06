@@ -58,7 +58,8 @@
 	RZ_FDT_CASE("rzv2h-evk", "1", "0", "rzv2h-evk-ver1.dtb") \
 	RZ_FDT_CASE("rzv2h-evk", "2", "0", "rzv2h-evk-ver1.dtb") \
 	RZ_FDT_CASE("rzv2h-rdk", "1", "0", "rzv2h-rdk-ver1.dtb") \
-	RZ_FDT_CASE("imdt-v2h-sbc", "1", "0", "imdt-v2h-sbc.dtb")
+	RZ_FDT_CASE("imdt-v2h-sbc", "1", "0", "imdt-v2h-sbc.dtb") \
+	RZ_FDT_CASE("sparrow-hawk", "1", "0", "r8a779g3-sparrow-hawk.dtb")
 #endif
 
 /* Built-in overlay flags — add more overlays here */
@@ -70,7 +71,9 @@
 	RZ_OVERLAY_IF_FLAG("enable_overlay_dsi",          "${model_string}-${revision_major}.${revision_minor}-dsi.dtbo") \
 	RZ_OVERLAY_IF_FLAG("enable_overlay_audio_codec",  "${model_string}-${revision_major}.${revision_minor}-audio-codec.dtbo") \
 	RZ_OVERLAY_IF_FLAG("enable_overlay_csi_ov5640",   "${model_string}-${revision_major}.${revision_minor}-ov5640.dtbo") \
-	RZ_OVERLAY_IF_FLAG("enable_overlay_csi_ov5645",   "${model_string}-${revision_major}.${revision_minor}-cru-csi-ov5645.dtbo")
+	RZ_OVERLAY_IF_FLAG("enable_overlay_csi_ov5645",   "${model_string}-${revision_major}.${revision_minor}-cru-csi-ov5645.dtbo") \
+	RZ_OVERLAY_IF_FLAG("enable_overlay_csi_j1_imx219",   "${model_string}-${revision_major}.${revision_minor}-cru-csi-j1-imx219.dtbo") \
+	RZ_OVERLAY_IF_FLAG("enable_overlay_csi_j2_imx219",   "${model_string}-${revision_major}.${revision_minor}-cru-csi-j2-imx219.dtbo")
 #endif
 
 /* Image selection cases */

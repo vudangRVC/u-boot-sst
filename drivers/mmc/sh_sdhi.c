@@ -30,6 +30,7 @@
 #include <asm/arch/sh_sdhi.h>
 #include <asm/global_data.h>
 #include <clk.h>
+#include <configs/rz-cmn.h>
 
 #define DRIVER_NAME "sh-sdhi"
 #define SDHI_WRITE_TIMEOUT	100000
