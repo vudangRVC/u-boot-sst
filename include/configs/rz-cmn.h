@@ -36,8 +36,8 @@
 #define BOARD_ID_IMDT_V2H_SBC			0x32
 #define BOARD_ID_RCAR_V4H_SPARROWHAWK	0x40
 
-/* Platform settings stored in SPI flash at offset 0x400000 */
-#define CFG_SPL_PLATFORM_SETTINGS_OFFSET	0x400000
+/* Platform settings stored in SPI flash after the U-Boot FIT image. */
+#define CFG_SPL_PLATFORM_SETTINGS_OFFSET	0x2C0000
 
 /*
  * RZ Board SoC Identifiers
@@ -168,7 +168,7 @@
 #endif
 
 #ifndef CONFIG_BOOTCOMMAND
-#define CONFIG_BOOTCOMMAND	"run envboot;run prodsdboot"
+#define CONFIG_BOOTCOMMAND	"run envboot;run mmc_do_boot"
 #endif
 
 /* For board */

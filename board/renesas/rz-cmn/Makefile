@@ -11,4 +11,3 @@ obj-y	:= spl_rz_cmn.o
 else
 obj-y	:= rz-cmn.o
 endif
-

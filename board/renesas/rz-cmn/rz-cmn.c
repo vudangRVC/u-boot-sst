@@ -518,6 +518,10 @@ int setup_uboot_info_from_qspi(void)
 	}
 
 	switch (soc_id) {
+		case RZ_SOC_RCAR_V4H:
+			ret = spi_flash_read(flash, CFG_SPL_PLATFORM_SETTINGS_OFFSET,
+					     BOARD_INFO_SIZE_BYTES, board_info);
+			break;
 		case RZ_SOC_RZV2H:
 			ret = spi_flash_read(flash, RZV2H_XSPI_BOARD_INFO_OFFSET, CONFIG_ENV_SIZE, board_info);
 			break;
@@ -1129,8 +1133,10 @@ __weak int ft_board_setup(void *blob, struct bd_info *bd)
 
 int board_late_init(void)
 {
-	if (soc_id == RZ_SOC_RCAR_V4H)
+	if (soc_id == RZ_SOC_RCAR_V4H) {
+		setup_uboot_info_from_qspi();
 		return 0;
+	}
 
 	if(board_id == BOARD_ID_RZG2L_SBC)
 	{
