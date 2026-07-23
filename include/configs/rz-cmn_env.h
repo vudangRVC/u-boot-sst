@@ -96,6 +96,14 @@
 	RZ_IMAGE_CASE("preempt_rt", "Image-preempt_rt") \
 	RZ_IMAGE_CASE("nonpreempt", "Image-nonpreempt")
 
+/* The direct BL31/OP-TEE handoff is only valid for the V4H Sparrow-Hawk DTB. */
+#define RZ_V4H_DIRECT_OPTEE_IF_V4H \
+	"if test \"${fdtfile}\" = \"r8a779g3-sparrow-hawk.dtb\"; then " \
+		"run tfa_boot; " \
+	"else "
+
+#define RZ_V4H_DIRECT_OPTEE_END "fi; "
+
 #define RZ_ENV_DEFAULTS \
 	"overlaydir=dtb/renesas/overlays\0" \
 	"image_select=" \
@@ -119,24 +127,24 @@
 			RZ_OVERLAY_APPLY_LIST \
 			"if env exists overlay_user_cases; then run overlay_user_cases; fi; " \
 		"else echo WARN: Cannot load base DT; fi; \0" \
-	"tfa_boot=run fdt_select; " \
+	"tfa_boot=run mmc_args; run image_select; run fdt_select; " \
 		"if test \"${fdtfile}\" != \"r8a779g3-sparrow-hawk.dtb\"; then " \
 			"echo ERROR: tfa_boot is Sparrow-Hawk only; " \
-		"elif ext4load mmc 0:2 0x58000000 /boot/v4h-direct-optee.env; then " \
+		"elif ext4load mmc ${rootfs_mmcdev}:${rootfs_mmcpart} 0x58000000 /boot/v4h-direct-optee.env; then " \
 			"setenv manifest_bytes ${filesize}; env import -t 0x58000000 ${manifest_bytes}; " \
 			"if test \"${bl31_addr}\" = \"0x46400000\" && test \"${tee_addr}\" = \"0x44100000\" && " \
 				"test ${bl31_size} -gt 0 && test ${bl31_size} -le 0x22200 && " \
 				"test ${tee_size} -gt 0 && test ${tee_size} -le 0x300000; then " \
-				"if ext4load mmc 0:2 ${bl31_addr} ${bl31_file}; then " \
+				"if ext4load mmc ${rootfs_mmcdev}:${rootfs_mmcpart} ${bl31_addr} ${bl31_file}; then " \
 					"setenv bl31_loaded_size ${filesize}; crc32 ${bl31_addr} ${bl31_loaded_size} bl31_crc_actual; " \
 					"if test ${bl31_loaded_size} = ${bl31_size} && test ${bl31_crc_actual} = ${bl31_crc32}; then " \
-						"if ext4load mmc 0:2 ${tee_addr} ${tee_file}; then " \
+						"if ext4load mmc ${rootfs_mmcdev}:${rootfs_mmcpart} ${tee_addr} ${tee_file}; then " \
 							"setenv tee_loaded_size ${filesize}; crc32 ${tee_addr} ${tee_loaded_size} tee_crc_actual; " \
 							"if test ${tee_loaded_size} = ${tee_size} && test ${tee_crc_actual} = ${tee_crc32}; then " \
-								"if ext4load mmc 0:2 0x50200000 /boot/Image && " \
-									"ext4load mmc 0:2 0x48000000 /boot/dtb/renesas/r8a779g3-sparrow-hawk.dtb; then " \
+								"if ext4load mmc ${rootfs_mmcdev}:${rootfs_mmcpart} ${image_addr} /boot/${kernel_image} && " \
+									"ext4load mmc ${rootfs_mmcdev}:${rootfs_mmcpart} ${dtb_addr} /boot/dtb/renesas/r8a779g3-sparrow-hawk.dtb; then " \
 									"tfa_prepare ${bl31_addr} ${bl31_loaded_size} ${tee_addr} ${tee_loaded_size}; " \
-									"booti 0x50200000 - 0x48000000; " \
+									"booti ${image_addr} - ${dtb_addr}; " \
 								"fi; " \
 							"else echo ERROR: TEE size or CRC mismatch; fi; " \
 						"else echo ERROR: TEE load failed; fi; " \
@@ -144,9 +152,12 @@
 				"else echo ERROR: BL31 load failed; fi; " \
 			"else echo ERROR: invalid direct OP-TEE manifest; fi; " \
 		"else echo ERROR: cannot load direct OP-TEE manifest; fi\0" \
-	"mmc_do_boot=run mmc_args; run image_select; " \
-		"fatload mmc ${mmcdev}:${mmcpart} ${image_addr} ${kernel_image}; " \
-		"run fdt_ovrun; " \
-		"booti ${image_addr} - ${dtb_addr}\0"
+	"mmc_do_boot=run mmc_args; run image_select; run fdt_select; " \
+		RZ_V4H_DIRECT_OPTEE_IF_V4H \
+			"fatload mmc ${mmcdev}:${mmcpart} ${image_addr} ${kernel_image}; " \
+			"run fdt_ovrun; " \
+			"booti ${image_addr} - ${dtb_addr}; " \
+		RZ_V4H_DIRECT_OPTEE_END \
+		"\0"
 
 #endif /* __RZ_CMN_ENV_H__ */

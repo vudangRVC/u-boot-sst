@@ -388,9 +388,14 @@ static void populate_env_from_board_info(const platform_desc_t *board_info)
 	snprintf(tmp_buf, sizeof(tmp_buf), "%u", board_info->u_boot_desc[1]);
 	env_set("mmcpart", tmp_buf);
 
+	snprintf(tmp_buf, sizeof(tmp_buf), "%u", board_info->u_boot_desc[2]);
+	env_set("rootfs_mmcdev", tmp_buf);
+
+	snprintf(tmp_buf, sizeof(tmp_buf), "%u", board_info->u_boot_desc[3]);
+	env_set("rootfs_mmcpart", tmp_buf);
+
 	snprintf(tmp_buf, sizeof(tmp_buf),
-		 "setenv bootargs rw rootwait earlycon root=/dev/mmcblk%up%u",
-		 board_info->u_boot_desc[2], board_info->u_boot_desc[3]);
+		 "setenv bootargs rw rootwait earlycon root=/dev/mmcblk${rootfs_mmcdev}p${rootfs_mmcpart}");
 	env_set("mmc_args", tmp_buf);
 
 	/* Extract BE32 from u_boot_desc[4..7] for image_addr */
