@@ -145,7 +145,7 @@
 	"image_addr=0x48080000\0" \
 	"env_addr=0x58000000\0" \
 	"dtbo_addr=0x58100000\0" \
-	"model_string=sparrowhawk\0" \
+	"model_string=sparrow-hawk\0" \
 	"revision_major=1\0" \
 	"revision_minor=0\0" \
 	"mmc_args=setenv bootargs rw rootwait earlycon root=/dev/mmcblk1p2\0" \
