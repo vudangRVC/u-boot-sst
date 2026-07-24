@@ -40,7 +40,7 @@ ifdef CONFIG_RCAR_GEN4
 	ifdef CONFIG_XPL_BUILD
 # 	obj-y	+= gen4-spl.o
 	else
-# 	obj-y	+= gen4-common.o
+	obj-y	+= gen4-common.o
 	endif
 endif
 
