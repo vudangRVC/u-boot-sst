@@ -136,11 +136,11 @@
 				"test ${bl31_size} -gt 0 && test ${bl31_size} -le 0x22200 && " \
 				"test ${tee_size} -gt 0 && test ${tee_size} -le 0x300000; then " \
 				"if ext4load mmc ${rootfs_mmcdev}:${rootfs_mmcpart} ${bl31_addr} ${bl31_file}; then " \
-					"setenv bl31_loaded_size ${filesize}; crc32 ${bl31_addr} ${bl31_loaded_size} bl31_crc_actual; " \
-					"if test ${bl31_loaded_size} = ${bl31_size} && test ${bl31_crc_actual} = ${bl31_crc32}; then " \
+					"setenv bl31_loaded_size ${filesize}; " \
+					"if test ${bl31_loaded_size} = ${bl31_size} && crc32 -v ${bl31_addr} ${bl31_loaded_size} bl31_crc32; then " \
 						"if ext4load mmc ${rootfs_mmcdev}:${rootfs_mmcpart} ${tee_addr} ${tee_file}; then " \
-							"setenv tee_loaded_size ${filesize}; crc32 ${tee_addr} ${tee_loaded_size} tee_crc_actual; " \
-							"if test ${tee_loaded_size} = ${tee_size} && test ${tee_crc_actual} = ${tee_crc32}; then " \
+							"setenv tee_loaded_size ${filesize}; " \
+							"if test ${tee_loaded_size} = ${tee_size} && crc32 -v ${tee_addr} ${tee_loaded_size} tee_crc32; then " \
 								"if ext4load mmc ${rootfs_mmcdev}:${rootfs_mmcpart} ${image_addr} /boot/${kernel_image} && " \
 									"ext4load mmc ${rootfs_mmcdev}:${rootfs_mmcpart} ${dtb_addr} /boot/dtb/renesas/r8a779g3-sparrow-hawk.dtb; then " \
 									"tfa_prepare ${bl31_addr} ${bl31_loaded_size} ${tee_addr} ${tee_loaded_size}; " \
