@@ -119,8 +119,10 @@
 			RZ_OVERLAY_APPLY_LIST \
 			"if env exists overlay_user_cases; then run overlay_user_cases; fi; " \
 		"else echo WARN: Cannot load base DT; fi; \0" \
-		"tfa_set_fat_source=setenv tfa_mmcdev ${mmcdev}; setenv tfa_mmcpart ${mmcpart}\0" \
-		"tfa_set_ext4_source=setenv tfa_mmcdev ${rootfs_mmcdev}; setenv tfa_mmcpart ${rootfs_mmcpart}\0" \
+		"tfa_set_fat_source=setenv tfa_mmcdev ${mmcdev}; setenv tfa_mmcpart ${mmcpart}; " \
+			"setenv tfa_kernel_prefix; setenv tfa_dtb_prefix dtb/renesas/\0" \
+		"tfa_set_ext4_source=setenv tfa_mmcdev ${rootfs_mmcdev}; setenv tfa_mmcpart ${rootfs_mmcpart}; " \
+			"setenv tfa_kernel_prefix /boot/; setenv tfa_dtb_prefix /boot/dtb/renesas/\0" \
 		"tfa_boot=run tfa_set_fat_source; run tfa_boot_from\0" \
 		"tfa_boot_ext4=run tfa_set_ext4_source; run tfa_boot_from\0" \
 		"tfa_boot_from=run mmc_args; run image_select; run fdt_select; " \
@@ -137,8 +139,8 @@
 							"if load mmc ${tfa_mmcdev}:${tfa_mmcpart} ${tee_addr} ${tee_file}; then " \
 								"setenv tee_loaded_size ${filesize}; " \
 								"if test 0x${tee_loaded_size} -eq ${tee_size} && crc32 -v ${tee_addr} ${tee_loaded_size} tee_crc32; then " \
-									"if load mmc ${tfa_mmcdev}:${tfa_mmcpart} ${image_addr} /boot/${kernel_image} && " \
-										"load mmc ${tfa_mmcdev}:${tfa_mmcpart} ${dtb_addr} /boot/dtb/renesas/r8a779g3-sparrow-hawk.dtb; then " \
+									"if load mmc ${tfa_mmcdev}:${tfa_mmcpart} ${image_addr} ${tfa_kernel_prefix}${kernel_image} && " \
+										"load mmc ${tfa_mmcdev}:${tfa_mmcpart} ${dtb_addr} ${tfa_dtb_prefix}r8a779g3-sparrow-hawk.dtb; then " \
 										"tfa_prepare ${bl31_addr} ${bl31_loaded_size} ${tee_addr} ${tee_loaded_size}; " \
 										"booti ${image_addr} - ${dtb_addr}; " \
 								"fi; " \
